@@ -2,11 +2,9 @@ block('message')(
     content()(function(){
         return [
             {
-                //block : 'avatar',
-                block: 'message', elem: 'avatar',
-                //user : user,
+                block: 'message',
+                elem: 'avatar',
                 mod : { size: 'm'}
-                //mix: { block: 'message', elem: 'avatar' }
             },
             {
                 elem: 'username',

@@ -8,7 +8,7 @@ match(this.ctx.data)
         if(isLogged) {
             pageContent = [
                 {
-                    block : 'sidebar',
+                    elem : 'sidebar',
                     mods : { left : true },
                     js : true,
                     content : [
@@ -70,7 +70,7 @@ match(this.ctx.data)
                     data : data.user
                 },
                 {
-                    block : 'sidebar',
+                    elem : 'sidebar',
                     mods : { right : true },
                     content : [
                         {
@@ -129,7 +129,7 @@ match(this.ctx.data)
                     data : data.user
                 },
                 {
-                    block : 'main',
+                    elem : 'main',
                     mods : { logged : isLogged },
                     content : pageContent
                 },

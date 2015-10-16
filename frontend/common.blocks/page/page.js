@@ -1,5 +1,5 @@
-modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users'],
-    function(provide, BEMDOM, chatAPI, io, Users){
+modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users', 'header'],
+    function(provide, BEMDOM, chatAPI, io, Users, Header){
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
                 'js' : {
@@ -17,17 +17,15 @@ modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users'],
                                 io.socket.get('/csrfToken', function(data){
                                     io.socket.get('/webrtc/connected', { _csrf : data._csrf });
                                 });
-                            });
+                            }, 0);
                         });
 
                         io.socket.on('activeUsersUpdated', function(users){
-                            console.log('Active users: ', users);
                             _this._activeUsersUpdated = users;
                             _this.emit('activeUsersUpdated', users);
                         });
 
                         io.socket.on('slackInited', function(){
-                            console.log('Slack inited!');
                             if(!chatAPI.isOpen()) {
                                 chatAPI.init();
                             }
@@ -38,6 +36,9 @@ modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users'],
                             _this.emit('slackInited');
                         });
 
+                        Header.on('menu-toggle', function(e, data){
+                            data.visible ? _this.setMod(_this.elem('sidebar'), 'hidden') : _this.delMod(_this.elem('sidebar'), 'hidden');
+                        });
                     }
                 }
             }
