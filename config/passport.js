@@ -15,50 +15,6 @@
  */
 
 module.exports.passport = {
-    /*local : {
-     strategy : require('passport-local').Strategy
-     },*/
-
-    /*  twitter : {
-     name : 'Twitter',
-     protocol : 'oauth',
-     strategy : require('passport-twitter').Strategy,
-     options  : {
-     consumerKey  : 'your-consumer-key',
-     consumerSecr : 'your-consumer-secret'
-     }
-     },*/
-
-    /*  github : {
-     name : 'GitHub',
-     protocol : 'oauth2',
-     strategy : require('passport-github').Strategy,
-     options  : {
-     clientID : 'your-client-id',
-     clientSecret : 'your-client-secret'
-     }
-     },*/
-
-    /*   vkontakte : {
-     name : 'Вконтакте',
-     protocol : 'oauth2',
-     strategy : require('passport-vkontakte').Strategy,
-     options : {
-     clientID : 'in-dev-use-local.js',
-     clientSecret : 'in-dev-use-local.js'
-     }
-     },
-
-     facebook : {
-     name : 'Facebook',
-     protocol : 'oauth2',
-     strategy : require('passport-facebook').Strategy,
-     options : {
-     clientID : 'in-dev-use-local.js',
-     clientSecret : 'in-dev-use-local.js'
-     }
-     },*/
-
     slack : {
         name : 'Slack',
         protocol : 'oauth2',
@@ -69,15 +25,5 @@ module.exports.passport = {
             callbackURL : process.env.SLACK_REDIRECT,
             scope : process.env.SLACK_SCOPE
         }
-    },
-
-    /*  google : {
-     name : 'Google',
-     protocol : 'oauth2',
-     strategy : require('passport-google-oauth').OAuth2Strategy,
-     options : {
-     clientID : 'your-client-id',
-     clientSecret : 'your-client-secret'
-     }
-     }*/
+    }
 };
