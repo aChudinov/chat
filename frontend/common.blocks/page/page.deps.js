@@ -5,8 +5,7 @@
         { block : 'i-bem', elem : 'dom' }
     ],
     shouldDeps : [
-        { elems : 'sidebar', mods : ['left', 'right'] },
-        { elems : 'main' },
+        { elems : ['main', 'sidebar'] },
         { block : 'landing' },
         { block : 'controller' },
         { block : 'clearfix' },

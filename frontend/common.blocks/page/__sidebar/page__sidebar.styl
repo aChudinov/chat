@@ -2,3 +2,30 @@
     width 230px
     height 100%
     background $gray_color
+
+    &_left
+        border-right 1px solid $border_color
+        overflow-y auto
+
+    &_right
+        border-left 1px solid $border_color
+        padding 10px
+
+
+@media $touch
+    .page__sidebar
+
+        &_right
+            display none
+
+        &_left
+            transition all .3s ease
+            box-shadow 0 0 0 1000px rgba(0, 0, 0, .3)
+            position absolute
+            display block
+            z-index 1
+            left 0
+
+        &_hidden
+            left -100%
+            box-shadow 0 0 0 1000px rgba(0, 0, 0, 0)

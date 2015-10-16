@@ -4,7 +4,7 @@ block('message')(
             {
                 block: 'message',
                 elem: 'avatar',
-                mod : { size: 'm'}
+                mod : { size: 'm' }
             },
             {
                 elem: 'username',

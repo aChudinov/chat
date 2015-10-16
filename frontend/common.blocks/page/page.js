@@ -33,12 +33,17 @@ modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users', 'hea
                             Users.fetch().catch(function(){
                                 Notify.error('Ошибка загрузки списка пользователей!');
                             });
+
                             _this.emit('slackInited');
                         });
 
                         Header.on('menu-toggle', function(e, data){
-                            data.visible ? _this.setMod(_this.elem('sidebar'), 'hidden') : _this.delMod(_this.elem('sidebar'), 'hidden');
-                        });
+                            if(data.visible){
+                                this.setMod(this.elem('sidebar'), 'hidden');
+                            }else{
+                                this.delMod(this.elem('sidebar'), 'hidden');
+                            }
+                        }.bind(this));
                     }
                 }
             }
