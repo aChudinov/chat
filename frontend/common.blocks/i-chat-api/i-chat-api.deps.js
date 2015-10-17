@@ -2,7 +2,10 @@
     mustDeps : [
         { block : 'jquery' },
         { block : 'vow' },
-        { block : 'eventemitter2' },
+        { block : 'lodash' },
+        { block : 'eventemitter2' }
+    ],
+    shouldDeps : [
         { elem : 'web' }
     ]
 });

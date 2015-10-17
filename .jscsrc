@@ -40,6 +40,7 @@
         "frontend/*.pages/**",
         "frontend/**/*.i18n/**",
         "frontend/libs/**",
+        "frontend/libs.blocks/**",
         "frontend/static/**",
         "frontend/*.bundles/**",
         "node_modules/**",

@@ -95,6 +95,7 @@ gulp.task('watch', function(){
     });
 
     gulp.watch(['frontend/**/*.js',
+        '!frontend/**/*.spec.js',
         '!frontend/static/**/*',
         '!frontend/*.bundles/**/*'], function(){
         runSequence('jslint', 'enb-no-cache', 'copy-js', 'browser-reload');
@@ -118,7 +119,7 @@ gulp.task('stylint', function(){
         .pipe(stylint({ config : '.stylintrc' }));
 });
 
-gulp.task('jslint',  shell.task([
+gulp.task('jslint', shell.task([
     'jshint-groups && jscs .'
 ]));
 
