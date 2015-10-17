@@ -11,10 +11,10 @@ modules.define(
                         instances.push(this);
 
                         this._container = this.elem('container');
-                        this._spinBlock = this.findBlockInside('spin');
+                        this._spin = this.findBlockInside('spin');
 
-                        if(this._spinBlock) {
-                            this._spinBlock.setMod('visible');
+                        if(this._spin) {
+                            this._spin.setMod('visible');
                         }
 
                         var shrimingEvents = channels('shriming-events');
@@ -135,10 +135,11 @@ modules.define(
                     selectedChannel.click();
                 }
 
-                this._spinBlock.delMod('visible');
+                this._spin.delMod('visible');
             },
 
             _renderIms : function(usersStatusOnStart){
+                var _this = this;
                 var pageBlock = this.findBlockOutside('page');
                 var ims = Store.getIms();
 
@@ -180,10 +181,10 @@ modules.define(
 
                 BEMDOM.update(this._container, imsList);
                 updateUsersStatus('activeUsersUpdated', pageBlock._activeUsersUpdated);
-                this._spinBlock.delMod('visible');
+                this._spin.delMod('visible');
 
                 function updateUsersStatus(name, data){
-                    this.findBlocksInside('user').forEach(function(user){
+                    _this.findBlocksInside('user').forEach(function(user){
                         switch (name) {
                             case 'activeUsersUpdated':
                                 if(data[user.params.id]) {
@@ -245,7 +246,7 @@ modules.define(
                     return Notify.error('Введите название канала!');
                 }
 
-                this._spinBlock.setMod('visible');
+                this._spin.setMod('visible');
                 this.delMod(this.elem('add-channel-input'), 'visible');
                 var _this = this;
                 chatAPI.post('channels.create', { name : channelName })
@@ -272,7 +273,7 @@ modules.define(
                         _this._initializeLists();
                     })
                     .always(function(){
-                        _this._spinBlock.delMod('visible');
+                        _this._spin.delMod('visible');
                         _this.setMod(_this.elem('add-channel-input'), 'visible');
                     });
             },
