@@ -16,34 +16,36 @@ module.exports = {
             {
                 content : message.content,
                 from : {
-                    socketId: sails.users[req.user.id],
-                    userId: req.user.id,
-                    userName: req.user.name,
+                    socketId : sails.users[req.user.id],
+                    userId : req.user.id,
+                    userName : req.user.name,
                     userTitle : req.user.real_name
                 }
             });
         return res.end();
     },
+
     getUsers : function(req, res){
         return res.json(sails.users);
     },
+
     connected : function(req, res){
-        if (!req.session.auth) {
+        if(!req.session.auth){
             return res.end();
         }
 
         sails.users = sails.users || {};
         sails.slackInstances = sails.slackInstances || {};
 
-        if (!req.isSocket) {
+        if(!req.isSocket){
             return res.json({ users : sails.users });
         }
 
         var socketId = sails.sockets.id(req.socket);
 
-        if (sails.slackInstances[req.user.id]) {
+        if(sails.slackInstances[req.user.id]){
             sails.sockets.emit(socketId, 'slackInited');
-        } else {
+        } else{
             slack.init(req);
         }
 

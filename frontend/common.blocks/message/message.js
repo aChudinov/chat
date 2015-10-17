@@ -1,7 +1,7 @@
 /**
  * @module message
  */
-modules.define('message', ['i-bem__dom', 'BEMHTML', 'i-users'], function(provide, BEMDOM, BEMHTML, Users){
+modules.define('message', ['i-bem__dom', 'BEMHTML', 'i-store'], function(provide, BEMDOM, BEMHTML, Store){
 
 /**
  * @exports
@@ -96,7 +96,7 @@ provide(BEMDOM.decl(this.name, {}, {
                 // Пользователь
                 id = sequence.substr(1);
 
-                message = message.replace(regex, '@' + Users.getUser(id).name);
+                message = message.replace(regex, '@' + Store.getUser(id).name);
             }else if(sequence.charAt(0) === '!'){
                 // Спец. команды Slack
             }else{

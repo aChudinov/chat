@@ -1,5 +1,5 @@
-modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users', 'header'],
-    function(provide, BEMDOM, chatAPI, io, Users, Header){
+modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-store', 'header'],
+    function(provide, BEMDOM, chatAPI, io, Store, Header){
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
                 'js' : {
@@ -30,7 +30,7 @@ modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users', 'hea
                                 chatAPI.init();
                             }
 
-                            Users.fetch().catch(function(){
+                            Store.fetchUsers().catch(function(){
                                 Notify.error('Ошибка загрузки списка пользователей!');
                             });
 
@@ -38,12 +38,10 @@ modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-users', 'hea
                         });
 
                         Header.on('menu-toggle', function(e, data){
-                            if(data.visible){
-                                this.setMod(this.elem('sidebar'), 'hidden');
-                            }else{
-                                this.delMod(this.elem('sidebar'), 'hidden');
-                            }
-                        }.bind(this));
+                            var sidebar = _this.elem('sidebar');
+
+                            data.visible ? _this.setMod(sidebar, 'hidden') : _this.delMod(sidebar, 'hidden');
+                        });
                     }
                 }
             }

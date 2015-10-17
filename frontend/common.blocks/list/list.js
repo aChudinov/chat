@@ -1,27 +1,28 @@
 modules.define(
     'list',
-    ['i-bem__dom', 'BEMHTML', 'jquery', 'i-chat-api', 'i-users', 'notify', 'events__channels', 'keyboard__codes', 'editable-title'],
-    function(provide, BEMDOM, BEMHTML, $, chatAPI, Users, Notify, channels, keyCodes, EditableTitle){
+    ['i-bem__dom', 'BEMHTML', 'jquery', 'i-chat-api', 'i-store', 'notify', 'events__channels', 'keyboard__codes', 'editable-title'],
+    function(provide, BEMDOM, BEMHTML, $, chatAPI, Store, Notify, channels, keyCodes, EditableTitle){
 
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
                 'js' : {
                     'inited' : function(){
-                        var instances = this.__self.instances || (
-                                this.__self.instances = []);
+                        var instances = this.__self.instances || (this.__self.instances = []);
                         instances.push(this);
 
                         this._container = this.elem('container');
-
                         this._spinBlock = this.findBlockInside('spin');
+
                         if(this._spinBlock) {
                             this._spinBlock.setMod('visible');
                         }
 
                         var shrimingEvents = channels('shriming-events');
 
-                        shrimingEvents.on('users-loaded', this._initializeLists, this);
+                        Store.on('users-loaded', this._initializeLists, this);
+
                         shrimingEvents.on('channel-received-message', this._handleNewMessage, this);
+
                         EditableTitle.on('channel-change-title', this._onChannelChangeTitle, this);
 
                         if(this.hasMod('type', 'channels')) {
@@ -55,10 +56,8 @@ modules.define(
                 var counterElem;
 
                 this.elem('item').each(function(index, item){
-                    // Получаем параметры канала
                     var itemParams = _this.elemParams($(item));
 
-                    // Если id итерируемого канала равен channelId
                     if(itemParams.channelId === channelId) {
                         counterElem = $(_this.findElem('counter')[index]);
                     }
@@ -70,9 +69,12 @@ modules.define(
             _initializeLists : function(){
                 var _this = this;
 
-                switch (_this.getMod('type')) {
+                switch (this.getMod('type')) {
                     case 'channels':
-                        this._getChannelsData();
+                        Store.fetchChannels().then(function(){
+                            _this._renderChannels();
+                        });
+
                         break;
 
                     case 'users':
@@ -83,7 +85,9 @@ modules.define(
                                 usersStatusOnStart[user.id] = user.presence;
                             });
 
-                            _this._getUsersData(usersStatusOnStart);
+                            Store.fetchIms().then(function(){
+                                _this._renderIms(usersStatusOnStart);
+                            });
                         });
                         break;
 
@@ -95,124 +99,114 @@ modules.define(
                 }
             },
 
-            _getChannelsData : function(){
-                var _this = this;
+            _renderChannels : function(){
+                var channels = Store.getChannels();
                 var generalChannelIndex;
                 var hashChannelIndex;
                 var selectedChannel;
-                var items;
-                chatAPI.get('channels.list')
-                    .then(function(data){
-                        var channelsList = data.channels.map(function(channel, index){
-                            if(channel.is_general) {
-                                generalChannelIndex = index;
-                            }
 
-                            if(channel.name == location.hash.slice(1)) {
-                                generalChannelIndex = index;
-                            }
+                var channelsList = channels.map(function(channel, index){
+                    if(channel.is_general) {
+                        generalChannelIndex = index;
+                    }
 
-                            return BEMHTML.apply({
-                                block : 'list',
-                                elem : 'item',
-                                mods : { type : 'channels' },
-                                content : channel.name,
-                                js : {
-                                    channelId : channel.id,
-                                    name : channel.name,
-                                    title : channel.topic.value
-                                }
-                            });
-                        });
+                    if(channel.name == location.hash.slice(1)) {
+                        hashChannelIndex = index;
+                    }
 
-                        BEMDOM.update(_this._container, channelsList);
-
-                        items = _this._container.children();
-                        selectedChannel = items[hashChannelIndex || generalChannelIndex];
-
-                        if(selectedChannel) {
-                            selectedChannel.click();
+                    return BEMHTML.apply({
+                        block : 'list',
+                        elem : 'item',
+                        mods : { type : 'channels' },
+                        content : channel.name,
+                        js : {
+                            channelId : channel.id,
+                            name : channel.name,
+                            title : channel.topic.value
                         }
-                    })
-                    .catch(function(){
-                        Notify.error('Ошибка получения списка каналов!');
-                    })
-                    .always(function(){
-                        _this._spinBlock.delMod('visible');
                     });
+                });
+
+                BEMDOM.update(this._container, channelsList);
+
+                selectedChannel = this._container.children()[hashChannelIndex || generalChannelIndex];
+
+                if(selectedChannel) {
+                    selectedChannel.click();
+                }
+
+                this._spinBlock.delMod('visible');
             },
 
-            _getUsersData : function(usersStatusOnStart){
-                var _this = this;
+            _renderIms : function(usersStatusOnStart){
                 var pageBlock = this.findBlockOutside('page');
+                var ims = Store.getIms();
 
-                chatAPI.get('im.list')
-                    .then(function(data){
-                        var imsList = data.ims.map(function(im){
-                            var user = Users.getUser(im.user);
+                var imsList = ims.map(function(im){
+                    var user = Store.getUser(im.user);
 
-                            if(!user) {
-                                return;
+                    if(!user) {
+                        return;
+                    }
+
+                    var presence = usersStatusOnStart[user.id];
+                    if(presence) {
+                        user.presence = usersStatusOnStart[user.id];
+                    }
+
+                    return BEMHTML.apply({
+                        block : 'list',
+                        elem : 'item',
+                        mods : { type : 'users' },
+                        js : {
+                            channelId : im.id,
+                            name : user.name,
+                            title : user.real_name
+                        },
+                        content : {
+                            block : 'user',
+                            js : {
+                                id : user.id
+                            },
+                            mods : { presence : user.presence },
+                            user : {
+                                name : user.name,
+                                realName : user.real_name,
+                                image_48 : user.profile.image_48
                             }
-
-                            var presence = usersStatusOnStart[user.id];
-                            if(presence) {
-                                user.presence = usersStatusOnStart[user.id];
-                            }
-
-                            return BEMHTML.apply({
-                                block : 'list',
-                                elem : 'item',
-                                mods : { type : 'users' },
-                                js : {
-                                    channelId : im.id,
-                                    name : user.name,
-                                    title : user.real_name
-                                },
-                                content : {
-                                    block : 'user',
-                                    js : {
-                                        id : user.id
-                                    },
-                                    mods : { presence : user.presence },
-                                    user : {
-                                        name : user.name,
-                                        realName : user.real_name,
-                                        image_48 : user.profile.image_48
-                                    }
-                                }
-                            });
-                        });
-
-                        BEMDOM.update(_this._container, imsList);
-                        updateUsersStatus('activeUsersUpdated', pageBlock._activeUsersUpdated);
-                    })
-                    .catch(function(){
-                        Notify.error('Ошибка получения списка приватных бесед');
-                    })
-                    .always(function(){
-                        _this._spinBlock.delMod('visible');
+                        }
                     });
+                });
+
+                BEMDOM.update(this._container, imsList);
+                updateUsersStatus('activeUsersUpdated', pageBlock._activeUsersUpdated);
+                this._spinBlock.delMod('visible');
 
                 function updateUsersStatus(name, data){
-                    _this.findBlocksInside('user').forEach(function(user){
+                    this.findBlocksInside('user').forEach(function(user){
                         switch (name) {
                             case 'activeUsersUpdated':
                                 if(data[user.params.id]) {
                                     user.setMod('presence', 'local');
-                                } else if(user.hasMod('presence', 'local')) {
+                                }else if(user.hasMod('presence', 'local')) {
                                     chatAPI.get('users.getPresence', { user : user.params.id }).then(function(data){
                                         if(data.ok) {
                                             user.setMod('presence', data.presence);
                                         }
                                     });
                                 }
+
                                 break;
+
                             case 'presence_change':
                                 if(user.params.id == data.user && !user.hasMod('presence', 'local')) {
                                     user.setMod('presence', data.presence);
                                 }
+
                                 break;
+
+                            default:
+
                         }
                     });
                 }

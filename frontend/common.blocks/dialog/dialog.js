@@ -1,8 +1,8 @@
 modules.define(
     'dialog',
-    ['i-bem__dom', 'BEMHTML', 'socket-io', 'i-chat-api', 'i-users', 'user', 'list',
+    ['i-bem__dom', 'BEMHTML', 'socket-io', 'i-chat-api', 'i-store', 'user', 'list',
         'message', 'keyboard__codes', 'jquery', 'notify', 'events__channels', 'functions__debounce'],
-    function(provide, BEMDOM, BEMHTML, io, chatAPI, Users, User, List, Message, keyCodes, $, Notify, channels, debounce){
+    function(provide, BEMDOM, BEMHTML, io, chatAPI, Store, User, List, Message, keyCodes, $, Notify, channels, debounce){
         var EVENT_METHODS = {
             'click-channels' : 'channels',
             'click-users' : 'im'
@@ -93,7 +93,7 @@ modules.define(
 
             _onHistoryScroll : debounce(function(e){
                 var history = this.elem('history');
-                
+
                 if((e.type === 'wheel' || e.type === 'DOMMouseScroll' || e.type === 'mousewheel') && history.scrollTop() === 0){
                     this.setMod(this.elem('spin'), 'visible');
                     this._getData(true);
@@ -109,7 +109,7 @@ modules.define(
                         console.log('Channel mark: ', data);
                     })
                     .catch(function(){
-                        Notify.error('Ошибка при открытии канала!');
+                        Notify.error('Ошибка при открытии канала');
                     });
             },
 
@@ -143,7 +143,7 @@ modules.define(
                         }
                     })
                     .catch(function(){
-                        Notify.error('Ошибка загрузки списка сообщений!');
+                        Notify.error('Ошибка загрузки списка сообщений');
                     })
                     .always(function(){
                         _this.delMod(_this.elem('spin'), 'visible');
@@ -151,15 +151,11 @@ modules.define(
             },
 
             _generateMessage : function(message){
-                var user = Users.getUser(message.user) || {};
+                var user = Store.getUser(message.user) || {};
+
                 return Message.render(user, message);
             },
 
-            /**
-             * Прокручивает блок с сообщениями к последнему сообщению
-             *
-             * @private
-             */
             _scrollToBottom : function(){
                 var historyElement = this.elem('history');
                 var historyElementHeight;
@@ -198,7 +194,7 @@ modules.define(
                         _this.elem('blank').hide();
                     })
                     .catch(function(){
-                        Notify.error('Ошибка при отправке сообщения!');
+                        Notify.error('Ошибка при отправке сообщения');
                     });
             }
         }));

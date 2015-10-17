@@ -7,6 +7,7 @@
     shouldDeps : [
         { elems : ['main', 'sidebar'] },
         { block : 'landing' },
+        { block : 'i-store' },
         { block : 'controller' },
         { block : 'clearfix' },
         { block : 'header', mods : { 'logged': true } },
