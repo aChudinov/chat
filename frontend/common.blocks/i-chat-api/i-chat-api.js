@@ -3,8 +3,8 @@
  * @description Обеспечивает общение клиентской части чата и Slack RTM
  */
 
-modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'eventemitter2', 'i-helper__function'],
-    function(provide, webAPI, $, vow, EventEmitter2, helper){
+modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'lodash', 'eventemitter2'],
+    function(provide, webAPI, $, vow, _, EventEmitter2){
 
         var chatAPIPrototype = {
             /**
@@ -48,7 +48,7 @@ modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'eventemitter2
 
             _RTM_START_URL : 'https://slack.com/api/rtm.start',
 
-            init : helper.once(function(){
+            init : _.once(function(){
                 this._setHandlers();
                 this._getSocketURL();
             }),
