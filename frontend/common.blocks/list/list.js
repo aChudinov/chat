@@ -20,10 +20,9 @@ modules.define(
                         var shrimingEvents = channels('shriming-events');
 
                         Store.on('users-loaded', this._initializeLists, this);
+                        EditableTitle.on('channel-change-title', this._onChannelChangeTitle, this);
 
                         shrimingEvents.on('channel-received-message', this._handleNewMessage, this);
-
-                        EditableTitle.on('channel-change-title', this._onChannelChangeTitle, this);
 
                         if(this.hasMod('type', 'channels')) {
                             this._initCreateNewChannelButton();
@@ -68,50 +67,38 @@ modules.define(
 
             _initializeLists : function(){
                 var _this = this;
+                var type = this.getMod('type');
 
-                switch (this.getMod('type')) {
-                    case 'channels':
-                        Store.fetchChannels().then(function(){
-                            _this._renderChannels();
+                if(type === 'channels'){
+                    Store.fetchChannels().then(function(){
+                        _this._renderChannels();
+                    });
+                }else if(type === 'users'){
+                    chatAPI.on('rtm.start', function(result){
+                        var usersStatusOnStart = {};
+
+                        result.users.forEach(function(user){
+                            usersStatusOnStart[user.id] = user.presence;
                         });
 
-                        break;
-
-                    case 'users':
-                        chatAPI.on('rtm.start', function(result){
-                            var usersStatusOnStart = {};
-
-                            result.users.forEach(function(user){
-                                usersStatusOnStart[user.id] = user.presence;
-                            });
-
-                            Store.fetchIms().then(function(){
-                                _this._renderIms(usersStatusOnStart);
-                            });
+                        Store.fetchIms().then(function(){
+                            _this._renderIms(usersStatusOnStart);
                         });
-                        break;
-
-                    case 'conference':
-                        break;
-
-                    default:
-
+                    });
                 }
             },
 
             _renderChannels : function(){
                 var channels = Store.getChannels();
-                var generalChannelIndex;
-                var hashChannelIndex;
-                var selectedChannel;
+                var selectedChannelIndex;
 
                 var channelsList = channels.map(function(channel, index){
                     if(channel.is_general) {
-                        generalChannelIndex = index;
+                        selectedChannelIndex = index;
                     }
 
-                    if(channel.name == location.hash.slice(1)) {
-                        hashChannelIndex = index;
+                    if(channel.name === location.hash.slice(1)) {
+                        selectedChannelIndex = index;
                     }
 
                     return BEMHTML.apply({
@@ -129,12 +116,7 @@ modules.define(
 
                 BEMDOM.update(this._container, channelsList);
 
-                selectedChannel = this._container.children()[hashChannelIndex || generalChannelIndex];
-
-                if(selectedChannel) {
-                    selectedChannel.click();
-                }
-
+                this.elem('item')[selectedChannelIndex].click();
                 this._spin.delMod('visible');
             },
 
@@ -180,45 +162,46 @@ modules.define(
                 });
 
                 BEMDOM.update(this._container, imsList);
-                updateUsersStatus('activeUsersUpdated', pageBlock._activeUsersUpdated);
+                this._updateUsersStatus('activeUsersUpdated', pageBlock._activeUsersUpdated);
                 this._spin.delMod('visible');
 
-                function updateUsersStatus(name, data){
-                    _this.findBlocksInside('user').forEach(function(user){
-                        switch (name) {
-                            case 'activeUsersUpdated':
-                                if(data[user.params.id]) {
-                                    user.setMod('presence', 'local');
-                                }else if(user.hasMod('presence', 'local')) {
-                                    chatAPI.get('users.getPresence', { user : user.params.id }).then(function(data){
-                                        if(data.ok) {
-                                            user.setMod('presence', data.presence);
-                                        }
-                                    });
-                                }
-
-                                break;
-
-                            case 'presence_change':
-                                if(user.params.id == data.user && !user.hasMod('presence', 'local')) {
-                                    user.setMod('presence', data.presence);
-                                }
-
-                                break;
-
-                            default:
-
-                        }
-                    });
-                }
-
                 pageBlock.on('activeUsersUpdated', function(e, data){
-                    updateUsersStatus('activeUsersUpdated', data);
+                    _this._updateUsersStatus('activeUsersUpdated', data);
                 });
 
                 chatAPI.on('presence_change', function(data){
-                    updateUsersStatus('presence_change', data);
+                    _this._updateUsersStatus('presence_change', data);
                 });
+            },
+
+            _updateUsersStatus : function(name, data){
+                this.findBlocksInside('user').forEach(function(user){
+                    switch (name) {
+                        case 'activeUsersUpdated':
+                            if(data[user.params.id]) {
+                                user.setMod('presence', 'local');
+                            }else if(user.hasMod('presence', 'local')) {
+                                chatAPI.get('users.getPresence', { user : user.params.id }).then(function(data){
+                                    if(data.ok) {
+                                        user.setMod('presence', data.presence);
+                                    }
+                                });
+                            }
+
+                            break;
+
+                        case 'presence_change':
+                            if(user.params.id == data.user && !user.hasMod('presence', 'local')) {
+                                user.setMod('presence', data.presence);
+                            }
+
+                            break;
+
+                        default:
+
+                    }
+                });
+
             },
 
             _initCreateNewChannelButton : function(){
@@ -242,6 +225,7 @@ modules.define(
 
             _createChannel : function(){
                 var channelName = this._createChannelInput.getVal();
+
                 if(!channelName.length) {
                     return Notify.error('Введите название канала!');
                 }
@@ -283,13 +267,8 @@ modules.define(
                 var type = this.getMod(item, 'type');
                 var counter = this._getItemCounter(this.elemParams(item).channelId);
 
-                if(type == 'channels'){
-                    location.hash = e.target.innerText;
-                }
-
-                if(counter) {
-                    counter.text('');
-                }
+                if(type == 'channels') location.hash = e.target.innerText;
+                if(counter) counter.text('');
 
                 this.__self.instances.forEach(function(list){
                     list.delMod(list.elem('item'), 'current');
@@ -303,9 +282,7 @@ modules.define(
             _onChannelChangeTitle : function(e, data){
                 var currentItem = $(this.elem('item_current'));
 
-                if(!currentItem.length) {
-                    return;
-                }
+                if(!currentItem.length) return;
 
                 var params = $.extend({}, this.elemParams(currentItem));
                 params.title = data.newTitle;
