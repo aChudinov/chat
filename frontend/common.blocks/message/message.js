@@ -92,14 +92,19 @@ provide(BEMDOM.decl(this.name, {}, {
 
             if(sequence.charAt(0) === '#'){
                 id = sequence.substr(1);
-                message = message.replace(regex, '#' + Store.getChannel(id).name);
+                message = message.replace('<' + sequence + '>', '#' + Store.getChannel(id).name);
             }else if(sequence.charAt(0) === '@'){
                 id = sequence.substr(1);
-                message = message.replace(regex, '@' + Store.getUser(id).name);
+                message = message.replace('<' + sequence + '>', '@' + Store.getUser(id).name);
             }else if(sequence.charAt(0) === '!'){
                 // Спец. команды Slack
             }else{
-                // Ссылка
+                message = message.replace('<' + sequence + '>', BEMHTML.apply({
+                    block : 'link',
+                    url : sequence,
+                    content : sequence,
+                    target : '_blank'
+                }));
             }
         });
 

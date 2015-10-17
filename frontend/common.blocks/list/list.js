@@ -34,11 +34,18 @@ modules.define(
             _handleNewMessage : function(e, data){
                 var counter = this._getItemCounter(data.channelId);
 
-                if(counter) {
-                    counter.text(Number(counter.text()) + 1);
-                }
-
+                if(counter) counter.text(Number(counter.text()) + 1);
                 this.dropElemCache('item');
+            },
+
+            selectChannelById : function(id){
+                var _this = this;
+
+                this.findElem('item').each(function(index, item){
+                    if(_this.elemParams($(item)).channelId === id){
+                        $(item).click();
+                    }
+                });
             },
 
             /**
@@ -143,6 +150,7 @@ modules.define(
                         mods : { type : 'users' },
                         js : {
                             channelId : im.id,
+                            userId : im.user,
                             name : user.name,
                             title : user.real_name
                         },
@@ -175,33 +183,25 @@ modules.define(
             },
 
             _updateUsersStatus : function(name, data){
-                this.findBlocksInside('user').forEach(function(user){
-                    switch (name) {
-                        case 'activeUsersUpdated':
-                            if(data[user.params.id]) {
-                                user.setMod('presence', 'local');
-                            }else if(user.hasMod('presence', 'local')) {
-                                chatAPI.get('users.getPresence', { user : user.params.id }).then(function(data){
-                                    if(data.ok) {
-                                        user.setMod('presence', data.presence);
-                                    }
-                                });
-                            }
+                var userElements = this.findBlocksInside('user');
 
-                            break;
-
-                        case 'presence_change':
-                            if(user.params.id == data.user && !user.hasMod('presence', 'local')) {
-                                user.setMod('presence', data.presence);
-                            }
-
-                            break;
-
-                        default:
-
+                userElements.forEach(function(user){
+                    if(name === 'activeUsersUpdated'){
+                        if(data[user.params.id]){
+                            user.setMod('presence', 'local');
+                        } else if(user.hasMod('presence', 'local')){
+                            chatAPI.get('users.getPresence', { user : user.params.id }).then(function(data){
+                                if(data.ok){
+                                    user.setMod('presence', data.presence);
+                                }
+                            });
+                        }
+                    }else if(name === 'presence_change'){
+                        if(user.params.id == data.user && !user.hasMod('presence', 'local')){
+                            user.setMod('presence', data.presence);
+                        }
                     }
                 });
-
             },
 
             _initCreateNewChannelButton : function(){
@@ -224,6 +224,7 @@ modules.define(
             },
 
             _createChannel : function(){
+                var _this = this;
                 var channelName = this._createChannelInput.getVal();
 
                 if(!channelName.length) {
@@ -232,7 +233,7 @@ modules.define(
 
                 this._spin.setMod('visible');
                 this.delMod(this.elem('add-channel-input'), 'visible');
-                var _this = this;
+
                 chatAPI.post('channels.create', { name : channelName })
                     .then(function(response){
                         if(!response.ok) {
