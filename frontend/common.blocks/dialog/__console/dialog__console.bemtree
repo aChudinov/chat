@@ -5,62 +5,32 @@ block('dialog').elem('console')(
         return applyCtx({
             block : 'dialog',
             elem : 'console',
-            js : {
-                username : data.name
-            },
+            js : { username : data.name },
             mix : [
-                {
-                    block : 'i-bem'
-                },
-                {
-                    block : 'chat-input',
-                    js : true
-                },
-                {
-                    block : 'textcomplete',
-                    js : true
-                }
+                { block : 'i-bem' },
+                { block : 'chat-input', js : true },
+                { block : 'textcomplete', js : true }
             ],
-
             content : [
                 {
                     block : 'popup',
-                    mods : {
-                        theme : 'islands',
-                        target : 'anchor',
-                        autoclosable : true,
-                        visible : false
-                    },
+                    mods : { theme : 'islands', target : 'anchor', autoclosable : true, visible : false },
                     directions : ['top-right'],
                     mix : { block : 'chat-input', elem : 'popup' }
                 },
                 {
                     block : 'textarea',
-                    mods : {
-                        focused : false
-                    },
-                    mix : {
-                        block : 'chat-input',
-                        elem : 'input'
-                    },
+                    mods : { focused : false },
+                    mix : { block : 'chat-input', elem : 'input' },
                     placeholder : 'Введите сообщение'
                 },
                 {
                     block : 'button',
                     mods : { theme : 'islands', view : 'plain' },
-                    icon : {
-                        block : 'icon',
-                        content: '☺'
-                    },
+                    icon : { block : 'icon', content: '☺' },
                     mix : [
-                        {
-                            block : 'dialog',
-                            elem : 'emoji'
-                        },
-                        {
-                            block : 'chat-input',
-                            elem : 'emoji-button'
-                        }
+                        { block : 'dialog', elem : 'emoji' },
+                        { block : 'chat-input', elem : 'emoji-button' }
                     ]
                 }
             ]

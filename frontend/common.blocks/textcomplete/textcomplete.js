@@ -1,7 +1,7 @@
 modules.define(
     'textcomplete',
-    ['i-bem__dom', 'BEMHTML', 'jquery', 'emoji-icon__data', 'jquery__textcomplete'],
-    function(provide, BEMDOM, BEMHTML, $, emojiData){
+    ['i-bem__dom', 'BEMHTML', 'i-store', 'jquery__textcomplete'],
+    function(provide, BEMDOM, BEMHTML, Store){
 
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
@@ -20,66 +20,45 @@ modules.define(
             _initTextCompletePlugin : function(){
                 var _this = this;
                 this._textarea = this.findBlockInside('textarea');
+                this._emojiList = Store.getEmojiList();
 
-                // Код из примера работы плагина
                 this._textarea.domElem.textcomplete([{
                     match : /\B:([\-+\w]*)$/,
+
                     search : function(term, callback){
                         _this._textarea.setMod('emoji');
-                        var results = [];
-                        var results2 = [];
-                        var results3 = [];
-                        $.each(emojiData, function(shortname, data){
-                            if(shortname.indexOf(term) > -1) {
-                                results.push(shortname);
-                            } else {
-                                if((data.aliases !== null) && (data.aliases.indexOf(term) > -1)) {
-                                    results2.push(shortname);
-                                }
-                                else if((data.keywords !== null) && (data.keywords.indexOf(term) > -1)) {
-                                    results3.push(shortname);
-                                }
-                            }
-                        });
 
-                        if(term.length >= 3) {
-                            results.sort(function(a, b){
-                                return (a.length > b.length);
-                            });
-                            results2.sort(function(a, b){
-                                return (a.length > b.length);
-                            });
-                            results3.sort();
-                        }
-                        var newResults = results.concat(results2).concat(results3);
-                        callback(newResults);
+                        callback(_this._emojiList);
                     },
 
-                    template : function(shortname){
+                    template : function(emoji){
                         return BEMHTML.apply([
                             {
-                                block : 'emoji-icon',
-                                cls : 'emojione',
-                                icon : emojiData[shortname].unicode,
-                                shortname : shortname
+                                block : 'textcomplete',
+                                elem : 'emoji-icon',
+                                tag : 'i',
+                                cls : 'emoji emoji-' + emoji,
+                                js : {
+                                    code : emoji
+                                }
                             },
-                            ':' + shortname + ':'
+                            ':' + emoji + ':'
                         ]);
                     },
 
-                    replace : function(shortname){
-                        return ':' + shortname + ': ';
+                    replace : function(emoji){
+                        return ':' + emoji + ': ';
                     },
 
                     index : 1,
 
                     maxCount : 10
                 }]).on({
-
                     'textComplete:hide' : function(){
                         _this._textarea.delMod('emoji');
                     }
                 });
             }
         }));
-    });
+    }
+);

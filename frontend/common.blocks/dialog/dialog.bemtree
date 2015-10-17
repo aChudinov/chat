@@ -3,6 +3,7 @@ block('dialog').def()(function(){
 
     return applyCtx({
         block : this.block,
+        js : true,
         content : [
             {
                 elem : 'header',
@@ -40,9 +41,9 @@ block('dialog').def()(function(){
             },
             {
                 elem : 'console',
+                js : true,
                 data : data
             }
-        ],
-        js : true
+        ]
     });
 });

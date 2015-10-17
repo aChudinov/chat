@@ -1,7 +1,7 @@
 modules.define(
     'chat-input',
-    ['i-bem__dom', 'BEMHTML', 'emoji-icon__data', 'chat-input__emoji-icon', 'jquery'],
-    function(provide, BEMDOM, BEMHTML, emojiIconData, EmojiIcon, $){
+    ['i-bem__dom', 'BEMHTML', 'i-store', 'jquery'],
+    function(provide, BEMDOM, BEMHTML, Store, $){
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
                 js : {
@@ -12,13 +12,13 @@ modules.define(
 
                         this._initEmojiPopup();
                         this._generateEmojis();
-                        this._submitOnEmojiClicked();
+
+                        this.bindTo('emoji-icon', 'click', this._onEmojiClick.bind(this));
                     }
                 }
             },
 
             _initEmojiPopup : function(){
-
                 this._popup.setAnchor(this._emojiButton);
                 this._popup.setContent(BEMHTML.apply({
                     block : 'menu',
@@ -39,24 +39,17 @@ modules.define(
             _generateEmojis : function(){
                 var emojiIconsBEMJSON = [];
 
-                for (var emojiIcon in emojiIconData) if(emojiIconData.hasOwnProperty(emojiIcon)) {
+                Store.getEmojiList().forEach(function(emoji){
                     emojiIconsBEMJSON.push({
-                        block : 'emoji-icon',
-                        mods : { size : 's' },
-                        mix : [
-                            {
-                                block : 'chat-input',
-                                elem : 'emoji-icon',
-                                js : { shortname : emojiIcon }
-                            },
-                            {
-                                block : 'i-bem'
-                            }
-                        ],
-                        icon : emojiIconData[emojiIcon].unicode,
-                        shortname : emojiIcon
+                        block : 'chat-input',
+                        elem : 'emoji-icon',
+                        tag : 'i',
+                        cls : 'emoji emoji-' + emoji,
+                        js : {
+                            code : emoji
+                        }
                     });
-                }
+                });
 
                 return emojiIconsBEMJSON;
             },
@@ -66,17 +59,14 @@ modules.define(
                 this._popup.setMod('visible', !modStatus);
             },
 
-            _submitOnEmojiClicked : function(){
-                var _this = this;
+            _onEmojiClick : function(e){
+                var emojiIcon = $(e.target);
+                var emojiCode = this.elemParams(emojiIcon).code;
 
-                EmojiIcon.on(
-                    'click',
-                    function(e){
-                        var emojiIcon = e.target;
-                        _this._textarea.setVal(_this._textarea.getVal() + emojiIcon.getShortname());
-                        _this._textarea.setMod('focused', true);
-                        _this._togglePopup();
-                    });
+                this._textarea.setVal(this._textarea.getVal() + ':' + emojiCode + ':');
+                this._textarea.setMod('focused', true);
+                this._togglePopup();
             }
         }));
-    });
+    }
+);

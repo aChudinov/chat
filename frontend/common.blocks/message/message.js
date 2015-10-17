@@ -1,7 +1,7 @@
 /**
  * @module message
  */
-modules.define('message', ['i-bem__dom', 'BEMHTML', 'i-store'], function(provide, BEMDOM, BEMHTML, Store){
+modules.define('message', ['i-bem__dom', 'BEMHTML', 'i-store', 'emojify'], function(provide, BEMDOM, BEMHTML, Store, emojify){
 
 /**
  * @exports
@@ -109,7 +109,25 @@ provide(BEMDOM.decl(this.name, {}, {
             }
         });
 
-        return message;
+        return this._parseSmiles(message);
+    },
+
+    /**
+     * Парсинг смайликов
+     *
+     * @param {String} message
+     * @returns {String}
+     * @private
+     */
+    _parseSmiles : function(message){
+        return emojify.replace(message, function(emoji, emojiName){
+            return BEMHTML.apply({
+                block : 'message',
+                elem : 'smile',
+                tag : 'i',
+                cls : 'emoji emoji-' + emojiName
+            });
+        });
     }
 }));
 

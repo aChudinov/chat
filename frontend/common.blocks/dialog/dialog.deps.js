@@ -1,12 +1,11 @@
 ({
     mustDeps : [
-        { block : 'spin', mods : { theme : 'shriming', size : 'xl', visible : true } }
+        { block : 'spin', mods : { theme : 'shriming', size : 'xl', visible : true } },
+        { block : 'textarea', mods : { theme : 'islands', size : 'm', focused : true, name : 'msg' } }
     ],
     shouldDeps : [
         { elems : ['message', 'container', 'spin', 'name', 'title', 'info', 'blank'] },
         { block : 'keyboard', elems : ['codes'] },
-        { block : 'textarea', mods : { theme : 'islands', size : 'm', focused : true, name : 'msg' } },
-        { block : 'message', elem : 'avatar' },
         { block : 'message' },
         { block : 'i-chat-api' },
         { block : 'avatar', mods : { 'size' : 'm' } },
