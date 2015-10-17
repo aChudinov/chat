@@ -84,6 +84,7 @@ provide(BEMDOM.decl(this.name, {}, {
 
         sequences.forEach(function(sequence){
             var pipe = sequence.indexOf('|');
+            var pipedSequence = sequence;
             var id;
 
             if(pipe != -1){
@@ -92,14 +93,14 @@ provide(BEMDOM.decl(this.name, {}, {
 
             if(sequence.charAt(0) === '#'){
                 id = sequence.substr(1);
-                message = message.replace('<' + sequence + '>', '#' + Store.getChannel(id).name);
+                message = message.replace('<' + pipedSequence + '>', '#' + Store.getChannel(id).name);
             }else if(sequence.charAt(0) === '@'){
                 id = sequence.substr(1);
-                message = message.replace('<' + sequence + '>', '@' + Store.getUser(id).name);
+                message = message.replace('<' + pipedSequence + '>', '@' + Store.getUser(id).name);
             }else if(sequence.charAt(0) === '!'){
                 // Спец. команды Slack
             }else{
-                message = message.replace('<' + sequence + '>', BEMHTML.apply({
+                message = message.replace('<' + pipedSequence + '>', BEMHTML.apply({
                     block : 'link',
                     url : sequence,
                     content : sequence,
