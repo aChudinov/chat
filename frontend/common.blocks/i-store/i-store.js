@@ -69,10 +69,6 @@ function(provide, BEM, chatAPI, channels, _){
             return channel || {};
         },
 
-        getChannelItem : function(){
-
-        },
-
         getChannels : function(){
             return _channels;
         },
@@ -81,10 +77,6 @@ function(provide, BEM, chatAPI, channels, _){
             var im = _.find(_ims, { id : id });
 
             return im || {};
-        },
-
-        getImItem : function(){
-
         },
 
         getIms : function(){
