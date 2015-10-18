@@ -1,0 +1,16 @@
+.speech
+    box-shadow none
+
+    &_loading
+        pointer-events none
+        animation color-pulse 2s infinite
+
+@keyframes color-pulse
+    0%
+        color $primary_color
+
+    50%
+        color red
+
+    100%
+        color $primary_color

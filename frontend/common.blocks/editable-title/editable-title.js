@@ -95,6 +95,9 @@ modules.define(
 
                 if(e.keyCode === keyCodes.ENTER && this._validateInput(value)){
                     this._saveTitle(value);
+                }else if(e.keyCode === keyCodes.ESC){
+                    this._input.hide();
+                    this._title.show();
                 }
             },
 

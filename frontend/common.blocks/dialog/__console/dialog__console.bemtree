@@ -29,8 +29,16 @@ block('dialog').elem('console')(
                     mods : { theme : 'islands', view : 'plain' },
                     icon : { block : 'icon', content: '☺' },
                     mix : [
-                        { block : 'dialog', elem : 'emoji' },
-                        { block : 'chat-input', elem : 'emoji-button' }
+                        { block : 'dialog', elem : 'emoji' }
+                    ]
+                },
+                {
+                    block : 'button',
+                    mods : { theme : 'islands', view : 'plain' },
+                    icon : { block : 'icon', content : '♫' },
+                    mix : [
+                        { block : 'dialog', elem : 'speech' },
+                        { block : 'speech', js : true }
                     ]
                 }
             ]

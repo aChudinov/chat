@@ -1,8 +1,8 @@
 modules.define(
     'dialog',
-    ['i-bem__dom', 'BEMHTML', 'socket-io', 'i-chat-api', 'i-store', 'user', 'list',
+    ['i-bem__dom', 'BEMHTML', 'socket-io', 'i-chat-api', 'i-store', 'user', 'list', 'speech',
         'message', 'keyboard__codes', 'jquery', 'notify', 'events__channels', 'functions__debounce'],
-    function(provide, BEMDOM, BEMHTML, io, chatAPI, Store, User, List, Message, keyCodes, $, Notify, channels, debounce){
+    function(provide, BEMDOM, BEMHTML, io, chatAPI, Store, User, List, Speech, Message, keyCodes, $, Notify, channels, debounce){
         var EVENT_METHODS = {
             'click-channels' : 'channels',
             'click-users' : 'im'
@@ -17,6 +17,11 @@ modules.define(
 
                         List.on('click-channels click-users', this._onChannelSelect, this);
                         User.on('click', this._onUserClick, this);
+                        Speech.on('write-message', function(e, data){
+                            if(data && data.text){
+                                this._sendMessage(data.text);
+                            }
+                        }, this);
 
                         this._textarea.bindTo('keydown', this._onConsoleKeyDown.bind(this));
                         this.bindTo('history', 'wheel DOMMouseScroll mousewheel', this._onHistoryScroll.bind(this));

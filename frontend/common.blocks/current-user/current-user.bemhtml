@@ -1,4 +1,5 @@
 block('current-user')(
+    js()(true),
     content()(function(){
         var user = this.ctx.user || {};
         var content = [];
