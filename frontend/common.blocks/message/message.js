@@ -1,7 +1,9 @@
 /**
  * @module message
  */
-modules.define('message', ['i-bem__dom', 'BEMHTML', 'i-store', 'emojify'], function(provide, BEMDOM, BEMHTML, Store, emojify){
+modules.define('message',
+    ['i-bem__dom', 'BEMHTML', 'i-store', 'emojify', 'marked'],
+function(provide, BEMDOM, BEMHTML, Store, emojify, marked){
 
 /**
  * @exports
@@ -67,13 +69,28 @@ provide(BEMDOM.decl(this.name, {}, {
     },
 
     /**
-     * Парсит внутренние ссылки Slack на каналы и пользователей
+     * Парсинг сообщения
      *
      * @param {String} message
      * @returns {String}
      * @private
      */
     _parseMessage : function(message){
+        message = this._parseCodes(message);
+        message = this._parseMarkup(message);
+        message = this._parseSmiles(message);
+
+        return message;
+    },
+
+    /**
+     * Парсинг внутренних ссылок Slack на каналы и пользователей
+     *
+     * @param {String} message
+     * @returns {String}
+     * @private
+     */
+    _parseCodes : function(message){
         var regex = /<(.*?)>/g;
         var sequences = [];
         var matches;
@@ -109,7 +126,18 @@ provide(BEMDOM.decl(this.name, {}, {
             }
         });
 
-        return this._parseSmiles(message);
+        return message;
+    },
+
+    /**
+     * Парсинг разметки
+     *
+     * @param {String} message
+     * @returns {String}
+     * @private
+     */
+    _parseMarkup : function(message){
+        return marked(message);
     },
 
     /**

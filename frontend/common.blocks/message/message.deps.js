@@ -3,6 +3,7 @@
         { elems : ['avatar', 'content', 'time', 'username'], },
         { block : 'avatar', mods : { 'size' : 'm' } },
         { block : 'i-users' },
-        { block : 'emojify' }
+        { block : 'emojify' },
+        { block : 'marked' }
     ]
 });
