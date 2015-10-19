@@ -77,8 +77,8 @@ provide(BEMDOM.decl(this.name, {}, {
      */
     _parseMessage : function(message){
         message = this._parseCodes(message);
-        message = this._parseMarkup(message);
         message = this._parseSmiles(message);
+        message = this._parseMarkup(message);
 
         return message;
     },
