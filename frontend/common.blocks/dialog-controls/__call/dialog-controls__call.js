@@ -8,6 +8,17 @@ modules.define(
 
         navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
 
+        var webRTCSupported = (typeof PeerConnection !== 'undefined' ||
+                               typeof IceCandidate !== 'undefined' ||
+                               typeof SessionDescription !== 'undefined');
+
+        if(!webRTCSupported){
+            Notify.error('Технологии, необходимые для работы чата не поддерживаются Вашим браузером. ' +
+                'Используйте Яндекс.Браузер!');
+
+            return;
+        }
+
         var pc = new PeerConnection({
                 iceServers : [
                     { url : "stun:23.21.150.121" },
@@ -50,6 +61,10 @@ modules.define(
             onSetMod : {
                 'js' : {
                     'inited' : function(){
+                        if(!webRTCSupported){
+                            return;
+                        }
+
                         this.bindTo('click', this._onCall.bind(this));
 
                         var _this = this;
