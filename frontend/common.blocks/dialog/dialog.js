@@ -16,7 +16,7 @@ modules.define(
                         this._container = this.elem('container');
 
                         List.on('click-channels click-users', this._onChannelSelect, this);
-                        User.on('click', this._onUserClick, this);
+                        User.on('click-user', this._onUserSelect, this);
                         Speech.on('write-message', function(e, data){
                             if(data && data.text){
                                 this._sendMessage(data.text);
@@ -62,7 +62,7 @@ modules.define(
              * @param {Object} userParams
              * @private
              */
-            _onUserClick : function(e, userParams){
+            _onUserSelect : function(e, userParams){
                 var dialogControlBlock = this.findBlockInside('dialog-controls');
                 var callButton = dialogControlBlock.findElem('call');
 

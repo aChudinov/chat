@@ -12,6 +12,7 @@ modules.define('user', ['i-bem__dom'],
                         var pageBlock = this.findBlockOutside('page');
                         var dialogControlBlock = pageBlock.findBlockInside('dialog-controls');
                         var callButton = dialogControlBlock.findElem('call');
+
                         if(this.hasMod('presence', 'local')) {
                             dialogControlBlock.delMod(callButton, 'disabled');
                         } else {
@@ -20,10 +21,12 @@ modules.define('user', ['i-bem__dom'],
                     }
                 }
             },
+            
             _onUserClick : function(){
                 var userParams = this.params;
+
                 userParams.presence = this.getMod('presence');
-                this.emit('click', userParams);
+                this.emit('click-user', userParams);
             }
         }));
     }
