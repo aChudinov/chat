@@ -1,8 +1,8 @@
 modules.define(
     'dialog',
     ['i-bem__dom', 'BEMHTML', 'socket-io', 'i-chat-api', 'i-store', 'user', 'list', 'speech',
-        'message', 'keyboard__codes', 'jquery', 'notify', 'events__channels', 'functions__debounce'],
-    function(provide, BEMDOM, BEMHTML, io, chatAPI, Store, User, List, Speech, Message, keyCodes, $, Notify, channels, debounce){
+        'message', 'keyboard__codes', 'jquery', 'notify', 'events__channels', 'functions__throttle'],
+    function(provide, BEMDOM, BEMHTML, io, chatAPI, Store, User, List, Speech, Message, keyCodes, $, Notify, channels, throttle){
         var EVENT_METHODS = {
             'click-channels' : 'channels',
             'click-users' : 'im'
@@ -34,6 +34,11 @@ modules.define(
                 List.un('click-channels click-users');
             },
 
+            /**
+             * Подписка на событие message от RTM
+             *
+             * @private
+             */
             _subscribeMessageUpdate : function(){
                 var _this = this;
                 var shrimingEvents = channels('shriming-events');
@@ -50,6 +55,13 @@ modules.define(
                 });
             },
 
+            /**
+             * Обработка события клика на пользователя в списке
+             *
+             * @param {Event} e
+             * @param {Object} userParams
+             * @private
+             */
             _onUserClick : function(e, userParams){
                 var dialogControlBlock = this.findBlockInside('dialog-controls');
                 var callButton = dialogControlBlock.findElem('call');
@@ -64,6 +76,13 @@ modules.define(
                 callButton.data('slackId', userParams.id);
             },
 
+            /**
+             * Обработка события выбора канала
+             *
+             * @param {Event} e
+             * @param {Object} data
+             * @private
+             */
             _onChannelSelect : function(e, data){
                 this._channelId = data.channelId;
                 this._channelType = EVENT_METHODS[e.type];
@@ -93,18 +112,33 @@ modules.define(
 
                 BEMDOM.update(this._container, []);
                 this.setMod(this.elem('spin'), 'visible');
+                this.dropElemCache('message');
                 this._getData();
             },
 
-            _onHistoryScroll : debounce(function(e){
+            /**
+             * Обработка сролла истории сообщений для подгрузки истории
+             */
+            _onHistoryScroll : throttle(function(){
                 var history = this.elem('history');
 
-                if((e.type === 'wheel' || e.type === 'DOMMouseScroll' || e.type === 'mousewheel') && history.scrollTop() === 0){
+                if(
+                    !(this.elem('message').length < 100) &&
+                    !this.getMod(this.elem('spin'), 'visible') &&
+                    !this.elem('blank').is(':visible') &&
+                    history.scrollTop() === 0
+                ){
                     this.setMod(this.elem('spin'), 'visible');
                     this._getData(true);
                 }
-            }, 100),
+            }, 500),
 
+            /**
+             * Пометка сообщений канала прочитанными
+             *
+             * @param {Number} timestamp
+             * @private
+             */
             _markChannelRead : function(timestamp){
                 chatAPI.post(this._channelType + '.mark', {
                     channel : this._channelId,
@@ -113,13 +147,20 @@ modules.define(
                     .then(function(data){
                         console.log('Channel mark: ', data);
                     })
-                    .catch(function(){
-                        Notify.error('Ошибка при открытии канала');
+                    .catch(function(error){
+                        Notify.error(error, 'Ошибка при открытии канала');
                     });
             },
 
+            /**
+             * Загрузка истории сообщений выбранного канала
+             *
+             * @param {Boolean} infiniteScroll - загрузка данных при скролле
+             * @private
+             */
             _getData : function(infiniteScroll){
                 var _this = this;
+                _this._scrollHeight = _this.elem('history')[0].scrollHeight;
 
                 this.elem('blank').hide();
 
@@ -140,37 +181,57 @@ modules.define(
                             _this.elem('blank').show();
                         }
 
+
                         if(infiniteScroll){
                             BEMDOM.prepend(_this._container, messagesList.join(''));
                         }else{
                             BEMDOM.update(_this._container, messagesList);
-                            _this._scrollToBottom();
                         }
+
+                        _this._scrollToBottom();
                     })
-                    .catch(function(){
-                        Notify.error('Ошибка загрузки списка сообщений');
+                    .catch(function(error){
+                        Notify.error(error, 'Ошибка загрузки списка сообщений');
                     })
                     .always(function(){
                         _this.delMod(_this.elem('spin'), 'visible');
                     });
             },
 
+            /**
+             * Парсинг сообщения
+             *
+             * @param {String} message
+             * @returns {Object}
+             * @private
+             */
             _generateMessage : function(message){
                 var user = Store.getUser(message.user) || {};
 
                 return Message.render(user, message);
             },
 
+            /**
+             * Скролл содержимого диалога вниз на загруженное количество сообщений
+             *
+             * @private
+             */
             _scrollToBottom : function(){
                 var historyElement = this.elem('history');
-                var historyElementHeight;
+                var scrollHeight;
 
                 if(historyElement.length){
-                    historyElementHeight = historyElement[0].scrollHeight;
-                    $(historyElement).scrollTop(historyElementHeight);
+                    scrollHeight = historyElement[0].scrollHeight - this._scrollHeight;
+                    $(historyElement).scrollTop(scrollHeight);
                 }
             },
 
+            /**
+             * Обработчик нажатия на клавишу Enter
+             *
+             * @param {Event} e
+             * @private
+             */
             _onConsoleKeyDown : function(e){
                 if(e.keyCode === keyCodes.ENTER){
                     e.preventDefault();
@@ -186,6 +247,12 @@ modules.define(
                 }
             },
 
+            /**
+             * Отправка сообщения в текущий активный канал
+             *
+             * @param {String} message
+             * @private
+             */
             _sendMessage : function(message){
                 var _this = this;
 

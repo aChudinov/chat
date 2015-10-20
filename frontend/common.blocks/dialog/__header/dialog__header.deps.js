@@ -1,10 +1,6 @@
-(
-{
+({
     mustDeps : [
-        {
-            block: 'dialog-controls', elems: ['call']
-        }
+        { block: 'dialog-controls', elems: ['call'] }
     ],
-    shouldDeps : [
-    ]
+    shouldDeps : []
 });
