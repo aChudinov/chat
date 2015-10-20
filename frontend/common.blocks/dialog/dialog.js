@@ -172,12 +172,16 @@ modules.define(
             },
 
             _onConsoleKeyDown : function(e){
-                if(e.keyCode === keyCodes.ENTER && !e.ctrlKey){
+                if(e.keyCode === keyCodes.ENTER){
                     e.preventDefault();
 
-                    if(!this._textarea.hasMod('emoji')){
-                        this._sendMessage(e.target.value);
-                        e.target.value = '';
+                    if(e.ctrlKey || e.metaKey || e.shiftKey){
+                        this._textarea.setVal(this._textarea.getVal() + '\n');
+                    }else{
+                        if(!this._textarea.hasMod('emoji')){
+                            this._sendMessage(e.target.value);
+                            e.target.value = '';
+                        }
                     }
                 }
             },

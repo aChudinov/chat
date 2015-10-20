@@ -78,6 +78,7 @@ provide(BEMDOM.decl(this.name, {}, {
     _parseMessage : function(message){
         message = this._parseCodes(message);
         message = this._parseSmiles(message);
+        message = this._parseMultiline(message);
         message = this._parseMarkup(message);
 
         return message;
@@ -156,6 +157,15 @@ provide(BEMDOM.decl(this.name, {}, {
                 cls : 'emoji emoji-' + emojiName
             });
         });
+    },
+
+    /**
+     * Парсинг многострочных сообщений
+     *
+     * @param {String} message
+     */
+    _parseMultiline : function(message){
+        return message.replace(/\n/g, "<br />");
     }
 }));
 
