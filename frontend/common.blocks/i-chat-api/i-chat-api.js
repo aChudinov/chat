@@ -3,8 +3,8 @@
  * @description Обеспечивает общение клиентской части чата и Slack RTM
  */
 
-modules.define('i-chat-api', ['socket-io', 'jquery', 'vow', 'eventemitter2', 'lodash'],
-    function(provide, io, $, vow, EventEmitter2, _){
+modules.define('i-chat-api', ['socket-io', 'jquery', 'vow', 'eventemitter2', 'lodash', 'notify'],
+    function(provide, io, $, vow, EventEmitter2, _, Notify){
         var ERRORS = {
             'name_taken' : 'Невозможно создать канал с данным именем',
             'restricted_action' : 'Действие запрещено',
@@ -146,14 +146,14 @@ modules.define('i-chat-api', ['socket-io', 'jquery', 'vow', 'eventemitter2', 'lo
                         }
 
                         if(!result.url) {
-                            throw  new Error('URL для создания socket-соединения не найден!');
+                            throw new Error('URL для создания socket-соединения не найден!');
                         }
 
                         _this.isOpen(true);
                         _this._initSocket(result.url);
                     })
                     .catch(function(error){
-                        console.error(error);
+                        Notify.error(error, 'Ошибка подключения RTM');
                     });
             },
 
