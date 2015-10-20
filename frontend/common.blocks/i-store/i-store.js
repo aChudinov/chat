@@ -3,9 +3,9 @@
  * @description Коллекции каналов, приватных бесед, пользователей
  */
 
-modules.define('i-store', ['i-bem', 'i-chat-api', 'events__channels', 'lodash'],
+modules.define('i-store', ['i-bem', 'i-chat-api', 'events__channels', 'lodash', 'notify'],
 
-function(provide, BEM, chatAPI, channels, _){
+function(provide, BEM, chatAPI, channels, _, Notify){
     var BOT_PROFILE = {
         is_bot : true,
         name : 'slackbot',
@@ -23,35 +23,46 @@ function(provide, BEM, chatAPI, channels, _){
     var _ims = [];
 
     var Store = {
-
         fetchUsers : function(){
-            return chatAPI.get('users.list').then(function(data){
-                if(data.members && data.members.length) {
-                    _users = data.members;
+            return chatAPI.get('users.list')
+                .then(function(data){
+                    if(data.members && data.members.length) {
+                        _users = data.members;
 
-                    this.emit('users-loaded');
-                }
-            }.bind(this));
+                        this.emit('users-loaded');
+                    }
+                }.bind(this))
+                .catch(function(error){
+                    Notify.error(error, 'Ошибка при загрузке списка пользователей');
+                });
         },
 
         fetchChannels : function(){
-            return chatAPI.get('channels.list').then(function(data){
-                if(data.channels && data.channels.length) {
-                    _channels = data.channels;
+            return chatAPI.get('channels.list')
+                .then(function(data){
+                    if(data.channels && data.channels.length) {
+                        _channels = data.channels;
 
-                    this.emit('channels-loaded');
-                }
-            }.bind(this));
+                        this.emit('channels-loaded');
+                    }
+                }.bind(this))
+                .catch(function(error){
+                    Notify.error(error, 'Ошибка при загрузке списка каналов');
+                });
         },
 
         fetchIms : function(){
-            return chatAPI.get('im.list').then(function(data){
-                if(data.ims && data.ims.length) {
-                    _ims = data.ims;
+            return chatAPI.get('im.list')
+                .then(function(data){
+                    if(data.ims && data.ims.length) {
+                        _ims = data.ims;
 
-                    this.emit('ims-loaded');
-                }
-            }.bind(this));
+                        this.emit('ims-loaded');
+                    }
+                }.bind(this))
+                .catch(function(error){
+                    Notify.error(error, 'Ошибка при загрузке списка приватных бесед');
+                });
         },
 
         getUser : function(id){

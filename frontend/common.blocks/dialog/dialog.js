@@ -202,8 +202,8 @@ modules.define(
                     .then(function(){
                         _this.elem('blank').hide();
                     })
-                    .catch(function(){
-                        Notify.error('Ошибка при отправке сообщения');
+                    .catch(function(error){
+                        Notify.error(error, 'Ошибка при отправке сообщения');
                     });
             }
         }));

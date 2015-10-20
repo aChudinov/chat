@@ -3,34 +3,51 @@
  * @description Обеспечивает общение клиентской части чата и Slack RTM
  */
 
-modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'lodash', 'eventemitter2'],
-    function(provide, webAPI, $, vow, _, EventEmitter2){
+modules.define('i-chat-api', ['socket-io', 'jquery', 'vow', 'eventemitter2', 'lodash'],
+    function(provide, io, $, vow, EventEmitter2, _){
+        var ERRORS = {
+            'name_taken' : 'Невозможно создать канал с данным именем',
+            'restricted_action' : 'Действие запрещено',
+            'no_channel' : 'Необходимо ввести название канала',
+            'user_is_bot' : 'Невозможно выполнить действие от имени анонимного пользователя',
+            'invalid_ts_latest' : 'Неверный timestamp',
+            'invalid_ts_oldest' : 'Неверный timestamp',
+            'invalid_timestamp' : 'Неверный timestamp',
+            'too_long' : 'Название канала должно быть не более 250 символов',
+            'msg_too_long' : 'Слишком длинное сообщение',
+            'no_text' : 'Введите текст сообщения',
+            'rate_limited' : 'Достигнут лимит сообщений',
+            'not_authed' : 'Ошибка передачи токена аутентификация',
+            'invalid_auth' : 'Неверный токен аутентификации',
+            'account_inactive' : 'Отсутствуют права на совершение действия',
+            'is_archived' : 'Канал удален',
+            'channel_not_found' : 'Канал не найден',
+            'not_in_channel' : 'У вас нет доступа к каналу',
+            'user_is_restricted' : 'Недостаточно прав'
+        };
 
         var chatAPIPrototype = {
             /**
-             * Совершает запрос к серверу Slack
+             * GET-запрос
              *
-             * @param {String} action  Код метода в API Slack
-             * @param {Object} params Передаваемые данные
-             * @return {Promise} Promise ответа сервера
+             * @param {String} action - код API метода
+             * @param {Object} params - передаваемые данные
+             * @return {Promise}
              */
-            request : webAPI.get,
+            get : function(action, params){
+                return this._connect(action, params, 'get');
+            },
 
             /**
-             * Алиас к .request()
-             */
-            get : webAPI.get,
-
-            /**
-             * Совершает POST-запрос к серверу Slack
-             * ! API Slack позволяет использовать GET-запросы для
-             * совершения любых операций.
+             * POST-запрос
              *
-             * @param {String} action Код метода в API Slack
-             * @param {Object} params Передаваемые данные
-             * @return {Promise} Promise ответа сервера
+             * @param {String} action - код API метода
+             * @param {Object} params - передаваемые данные
+             * @return {Promise}
              */
-            post : webAPI.post,
+            post : function(action, params){
+                return this._connect(action, params, 'post');
+            },
 
             /**
              * Аксессор к полю isOpen
@@ -46,31 +63,71 @@ modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'lodash', 'eve
                 return this._isOpen;
             },
 
-            _RTM_START_URL : 'https://slack.com/api/rtm.start',
-
+            /**
+             * Инициализация модуля
+             */
             init : _.once(function(){
                 this._setHandlers();
                 this._getSocketURL();
             }),
 
+            _connect : function(action, params, method){
+                params = params || {};
+                method = method || 'get';
+
+                return new vow.Promise(function(resolve, reject){
+                    $.get('/csrfToken')
+                        .done(function(data){
+                            var url = '/slack/' + action;
+
+                            $.extend(params, { _csrf : data._csrf });
+
+                            io.socket[method](url, params, function(resData, jwres){
+                                var data = resData.data;
+
+                                if(!resData || !data || jwres.statusCode !== 200) {
+                                    reject('Ошибка подключения к API');
+
+                                    return;
+                                }
+
+                                if(!data.ok && data.error){
+                                    reject(ERRORS[data.error] || 'Неизвестная ошибка');
+                                }
+
+                                resolve(data);
+                            });
+                        })
+                        .fail(function(err){
+                            reject(err);
+                        });
+                });
+            },
+
             _setHandlers : function(){
                 var events = this._internalEvents;
-                for (var event in events) if(events.hasOwnProperty(event)) {
-                    this.on(event, events[event]);
+
+                for (var event in events) {
+                    if(events.hasOwnProperty(event)) {
+                        this.on(event, events[event]);
+                    }
                 }
             },
 
             _internalEvents : {
-                // TODO: Решить с командой правильную обработку потери соединения
-                '_connection-open' : function(){
+                'connection-open' : function(){
+
                 },
-                '_connection-close' : function(response){
+
+                'connection-close' : function(response){
                     console.error('Socket.close');
                 },
-                '_connection-abort' : function(response){
+
+                'connection-abort' : function(response){
                     console.error('Socket.abort');
                 },
-                '_connection-error' : function(error){
+
+                'connection-error' : function(error){
                     console.log('Socket.connection.error');
                 }
             },
@@ -79,7 +136,8 @@ modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'lodash', 'eve
 
             _getSocketURL : function(){
                 var _this = this;
-                _this.post('rtm.start')
+
+                this.post('rtm.start')
                     .then(function(result){
                         _this.emit('rtm.start', result);
 
@@ -93,7 +151,6 @@ modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'lodash', 'eve
 
                         _this.isOpen(true);
                         _this._initSocket(result.url);
-                        _this._RTM_START_OBJECT = result;
                     })
                     .catch(function(error){
                         console.error(error);
@@ -105,7 +162,7 @@ modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'lodash', 'eve
                 this._socket = new WebSocket(url);
 
                 this._socket.onopen = function(){
-                    _this.emit('_connection-open');
+                    _this.emit('connection-open');
                 };
 
                 this._socket.onclose = function(event){
@@ -115,20 +172,22 @@ modules.define('i-chat-api', ['i-chat-api__web', 'jquery', 'vow', 'lodash', 'eve
                     };
 
                     _this.isOpen(false);
+
                     if(event.wasClean) {
-                        _this.emit('_connection-close', response);
+                        _this.emit('connection-close', response);
                     } else {
-                        _this.emit('_connection-abort', response);
+                        _this.emit('connection-abort', response);
                     }
                 };
 
                 this._socket.onmessage = function(event){
                     var response = JSON.parse(event.data);
+
                     _this.emit(response.type, response);
                 };
 
                 this._socket.onerror = function(error){
-                    _this.emit('_connection-error', error.message);
+                    _this.emit('connection-error', error.message);
                 };
             }
         };

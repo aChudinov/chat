@@ -6,12 +6,14 @@ modules.define(
             onSetMod : {
                 js : {
                     inited : function(){
-                        var pageBlock = this.findBlockOutside('page');
                         var _this = this;
+                        var pageBlock = this.findBlockOutside('page');
+
                         pageBlock.on('slackInited', function(){
                             if(!_this.hasMod('logged')){
                                 return;
                             }
+
                             _this._fetchTitleInfo();
                         });
 
@@ -41,8 +43,8 @@ modules.define(
 
                         _this.setTitle(chatInfo.team.name || '');
                     })
-                    .catch(function(err){
-                        Notify.error('Ошибка получения информации о чате');
+                    .catch(function(error){
+                        Notify.error(error, 'Ошибка получения информации о чате');
                     });
             },
 
@@ -52,10 +54,12 @@ modules.define(
              * @param {string} title Устанавливаемое значение
              */
             setTitle : function(title){
+                var titleElement = this.elem('title');
+
                 if(!title.length){
                     return;
                 }
-                var titleElement = this.elem('title');
+
                 if(!titleElement.length){
                     return;
                 }

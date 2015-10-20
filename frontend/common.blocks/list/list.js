@@ -190,11 +190,13 @@ modules.define(
                         if(data[user.params.id]){
                             user.setMod('presence', 'local');
                         } else if(user.hasMod('presence', 'local')){
-                            chatAPI.get('users.getPresence', { user : user.params.id }).then(function(data){
-                                if(data.ok){
-                                    user.setMod('presence', data.presence);
-                                }
-                            });
+                            chatAPI.get('users.getPresence', { user : user.params.id })
+                                .then(function(data){
+                                    data.ok && user.setMod('presence', data.presence);
+                                })
+                                .catch(function(error){
+                                    Notify.error(error, 'Ошибка загрузки статуса пользователя ' + user.params.name);
+                                });
                         }
                     }else if(name === 'presence_change'){
                         if(user.params.id == data.user && !user.hasMod('presence', 'local')){
@@ -236,26 +238,13 @@ modules.define(
 
                 chatAPI.post('channels.create', { name : channelName })
                     .then(function(response){
-                        if(!response.ok) {
-                            switch (response.error) {
-                                case 'name_taken':
-                                    Notify.error('Такое имя канала уже существует!');
-                                    break;
-                                case 'restricted_action':
-                                    Notify.error('Вам запрещено создавать новые каналы!');
-                                    break;
-                                case 'no_channel':
-                                    Notify.error('Имя канала не может быть пустым и должно состоять из букв и цифр!');
-                                    break;
-                                default:
-                                    Notify.error('Ошибка создания канала!');
-                            }
-                            return;
-                        }
                         Notify.success('Канал успешно создан!');
                         _this._createChannelInput.setVal('');
                         _this.dropElemCache('item');
                         _this._initializeLists();
+                    })
+                    .catch(function(error){
+                        Notify.error(error, 'Ошибка при создании канала');
                     })
                     .always(function(){
                         _this._spin.delMod('visible');
