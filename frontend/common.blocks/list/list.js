@@ -137,7 +137,8 @@ modules.define(
                         js : {
                             channelId : channel.id,
                             name : channel.name,
-                            title : channel.topic.value
+                            title : channel.topic.value,
+                            isMember : channel.is_member
                         }
                     });
                 });
@@ -241,6 +242,18 @@ modules.define(
             },
 
             /**
+             * Вступление в канал с параметром is_member: false
+             *
+             * @param {String} name
+             */
+            _joinChannel : function(name){
+                chatAPI.post('channels.join', { name : name })
+                    .catch(function(error){
+                        Notify.error(error, 'Ошибка вступления в канал ' + name);
+                    });
+            },
+
+            /**
              * Callback при нажатии на элемент списка
              *
              * @param {Event} e
@@ -249,7 +262,8 @@ modules.define(
             _onItemClick : function(e){
                 var item = $(e.currentTarget);
                 var type = this.getMod(item, 'type');
-                var counter = this._getItemCounter(this.elemParams(item).channelId);
+                var itemParams = this.elemParams(item);
+                var counter = this._getItemCounter(itemParams.channelId);
 
                 if(type == 'channels') location.hash = e.target.innerText;
                 if(counter) counter.text('');
@@ -259,7 +273,12 @@ modules.define(
                 });
 
                 this.setMod(item, 'current', true);
-                this.emit('click-' + type, this.elemParams(item));
+
+                if(!itemParams.isMember){
+                    this._joinChannel(itemParams.name);
+                }
+
+                this.emit('click-' + type, itemParams);
                 this.dropElemCache('item');
             },
 
