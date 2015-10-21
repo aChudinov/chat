@@ -1,7 +1,8 @@
 modules.define(
     'list',
-    ['i-bem__dom', 'BEMHTML', 'jquery', 'i-chat-api', 'i-store', 'notify', 'events__channels', 'keyboard__codes', 'editable-title'],
-    function(provide, BEMDOM, BEMHTML, $, chatAPI, Store, Notify, channels, keyCodes, EditableTitle){
+    ['i-bem__dom', 'BEMHTML', 'jquery', 'i-chat-api', 'i-store',
+        'notify', 'events__channels', 'keyboard__codes', 'editable-title', 'adding-input'],
+    function(provide, BEMDOM, BEMHTML, $, chatAPI, Store, Notify, channels, keyCodes, EditableTitle, AddingInput){
 
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
@@ -11,26 +12,30 @@ modules.define(
                         instances.push(this);
 
                         this._container = this.elem('container');
-                        this._spin = this.findBlockInside('spin');
+                        this._spin = this.elem('spin');
 
                         if(this._spin) {
-                            this._spin.setMod('visible');
+                            this.setMod(this._spin, 'visible');
                         }
 
                         var shrimingEvents = channels('shriming-events');
 
                         Store.on('users-loaded', this._initializeLists, this);
                         EditableTitle.on('channel-change-title', this._onChannelChangeTitle, this);
+                        AddingInput.on('channel-created', this._onChannelCreate, this);
 
                         shrimingEvents.on('channel-received-message', this._handleNewMessage, this);
-
-                        if(this.hasMod('type', 'channels')) {
-                            this._initCreateNewChannelButton();
-                        }
                     }
                 }
             },
 
+            /**
+             * Обработка новых сообщений, пришедших через RTM
+             *
+             * @param {Event} e
+             * @param {Object} data
+             * @private
+             */
             _handleNewMessage : function(e, data){
                 var counter = this._getItemCounter(data.channelId);
 
@@ -38,6 +43,11 @@ modules.define(
                 this.dropElemCache('item');
             },
 
+            /**
+             * Открытие канала по идентификатору
+             *
+             * @param {String} id
+             */
             selectChannelById : function(id){
                 var _this = this;
 
@@ -72,12 +82,18 @@ modules.define(
                 return counterElem ? counterElem : null;
             },
 
+            /**
+             * Инициализация списка
+             *
+             * @returns {Promise}
+             * @private
+             */
             _initializeLists : function(){
                 var _this = this;
                 var type = this.getMod('type');
 
                 if(type === 'channels'){
-                    Store.fetchChannels().then(function(){
+                    return Store.fetchChannels().then(function(){
                         _this._renderChannels();
                     });
                 }else if(type === 'users'){
@@ -88,13 +104,18 @@ modules.define(
                             usersStatusOnStart[user.id] = user.presence;
                         });
 
-                        Store.fetchIms().then(function(){
+                        return Store.fetchIms().then(function(){
                             _this._renderIms(usersStatusOnStart);
                         });
                     });
                 }
             },
 
+            /**
+             * Рендеринг списка каналов
+             *
+             * @private
+             */
             _renderChannels : function(){
                 var channels = Store.getChannels();
                 var selectedChannelIndex;
@@ -124,9 +145,15 @@ modules.define(
                 BEMDOM.update(this._container, channelsList);
 
                 this.elem('item')[selectedChannelIndex].click();
-                this._spin.delMod('visible');
+                this.delMod(this._spin, 'visible');
             },
 
+            /**
+             * Рендеринг списка приватных бесед
+             *
+             * @param usersStatusOnStart
+             * @private
+             */
             _renderIms : function(usersStatusOnStart){
                 var _this = this;
                 var pageBlock = this.findBlockOutside('page');
@@ -171,7 +198,7 @@ modules.define(
 
                 BEMDOM.update(this._container, imsList);
                 this._updateUsersStatus('activeUsersUpdated', pageBlock._activeUsersUpdated);
-                this._spin.delMod('visible');
+                this.delMod(this._spin, 'visible');
 
                 pageBlock.on('activeUsersUpdated', function(e, data){
                     _this._updateUsersStatus('activeUsersUpdated', data);
@@ -182,6 +209,13 @@ modules.define(
                 });
             },
 
+            /**
+             * Обновление статусов пользователей в списке
+             *
+             * @param {String} name
+             * @param {Object} data
+             * @private
+             */
             _updateUsersStatus : function(name, data){
                 var userElements = this.findBlocksInside('user');
 
@@ -206,52 +240,12 @@ modules.define(
                 });
             },
 
-            _initCreateNewChannelButton : function(){
-                this._createChannelButton = this.findBlockInside('button');
-                this._createChannelInput = this.findBlockInside('add-channel-input', 'input');
-
-                this._createChannelButton.on('click', function(){
-                    this.toggleMod(this.elem('add-channel-input'), 'visible');
-                    this._createChannelInput.setMod('focused');
-
-                    this.toggleMod(this.elem('addition'), 'open');
-                }, this);
-
-                this._createChannelInput.domElem.on('keydown', function(e){
-                    if(e.keyCode === keyCodes.ENTER) {
-                        e.preventDefault();
-                        this._createChannel(e.target.value);
-                    }
-                }.bind(this));
-            },
-
-            _createChannel : function(){
-                var _this = this;
-                var channelName = this._createChannelInput.getVal();
-
-                if(!channelName.length) {
-                    return Notify.error('Введите название канала!');
-                }
-
-                this._spin.setMod('visible');
-                this.delMod(this.elem('add-channel-input'), 'visible');
-
-                chatAPI.post('channels.create', { name : channelName })
-                    .then(function(response){
-                        Notify.success('Канал успешно создан!');
-                        _this._createChannelInput.setVal('');
-                        _this.dropElemCache('item');
-                        _this._initializeLists();
-                    })
-                    .catch(function(error){
-                        Notify.error(error, 'Ошибка при создании канала');
-                    })
-                    .always(function(){
-                        _this._spin.delMod('visible');
-                        _this.setMod(_this.elem('add-channel-input'), 'visible');
-                    });
-            },
-
+            /**
+             * Callback при нажатии на элемент списка
+             *
+             * @param {Event} e
+             * @private
+             */
             _onItemClick : function(e){
                 var item = $(e.currentTarget);
                 var type = this.getMod(item, 'type');
@@ -269,6 +263,29 @@ modules.define(
                 this.dropElemCache('item');
             },
 
+            /**
+             * Сallback при создании канала
+             *
+             * @param {Event} e
+             * @param {Object} data
+             * @param {Number} data.id - пришедший идентификатор после сохранения нового канала
+             * @private
+             */
+            _onChannelCreate : function(e, data){
+                this.dropElemCache('item');
+
+                this._initializeLists()
+                    .then(this.selectChannelById.bind(this, data.id));
+            },
+
+            /**
+             * Callback при сохранении темы канала
+             *
+             * @param {Event} e
+             * @param {Object} data
+             * @param {String} newTitle
+             * @private
+             */
             _onChannelChangeTitle : function(e, data){
                 var currentItem = $(this.elem('item_current'));
 

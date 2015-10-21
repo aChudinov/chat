@@ -1,0 +1,27 @@
+block('adding-input')(
+    content()(function(){
+        return applyCtx([
+            {
+                block : 'input',
+                mods : { theme : 'shriming', size : 's', 'has-clear' : true },
+                placeholder : 'Введите название канала',
+                mix : {
+                    block : 'adding-input',
+                    elem : 'input',
+                    mods : { visible : false }
+                }
+            },
+            {
+                block : 'button',
+                icon : { block : 'icon' },
+                mods : { theme : 'islands', view : 'plain' },
+                mix : { block : 'adding-input', elem : 'button' }
+            },
+            {
+                block : 'spin',
+                mix : { block : 'adding-input', elem : 'spin' },
+                mods : { theme : 'shriming', size : 's' }
+            }
+        ]);
+    })
+);

@@ -1,0 +1,22 @@
+.adding-input
+    &__input
+        display none
+        margin 0 13px
+
+        &_visible
+            display block
+
+    &__button
+        display inline-block
+        position absolute
+        right 14px
+        top 2px
+        transition all .1s
+
+        .icon
+            width 16px
+            height 16px
+            background-image url(add-button.svg)
+
+        &_open
+            transform rotate(45deg)

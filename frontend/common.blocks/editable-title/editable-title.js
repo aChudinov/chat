@@ -23,9 +23,9 @@ modules.define(
                 'active' : function(modName, modVal){
                     if(modVal){
                         this.findBlockInside('input').bindTo('keydown', this._handleInputKeyDown.bind(this));
-                        this._title.on('click', this._handleTitleClick.bind(this));
+                        this.bindTo('title', 'click', this._handleTitleClick);
                     }else{
-                        this._title.off('click');
+                        this.unbindFrom('title', 'click');
                         this.findBlockInside('input').unbindFrom('keydown');
                     }
                 }
