@@ -274,7 +274,7 @@ modules.define(
 
                 this.setMod(item, 'current', true);
 
-                if(!itemParams.isMember){
+                if(type == 'channels' && !itemParams.isMember){
                     this._joinChannel(itemParams.name);
                 }
 
