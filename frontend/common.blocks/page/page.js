@@ -30,9 +30,7 @@ modules.define('page', ['i-bem__dom', 'i-chat-api', 'socket-io', 'i-store', 'hea
                                 chatAPI.init();
                             }
 
-                            Store.fetchUsers().catch(function(){
-                                Notify.error('Ошибка загрузки списка пользователей!');
-                            });
+                            Store.fetchUsers();
 
                             _this.emit('slackInited');
                         });

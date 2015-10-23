@@ -8,8 +8,8 @@ modules.define(
 
         navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
 
-        var webRTCSupported = (typeof PeerConnection !== 'undefined' ||
-                               typeof IceCandidate !== 'undefined' ||
+        var webRTCSupported = (typeof PeerConnection !== 'undefined' &&
+                               typeof IceCandidate !== 'undefined' &&
                                typeof SessionDescription !== 'undefined');
 
         if(!webRTCSupported){
@@ -26,10 +26,7 @@ modules.define(
                 ]
             },
             {
-                optional : [
-                    // FF/Chrome interop? https://hacks.mozilla.org/category/webrtc/as/complete/
-                    { DtlsSrtpKeyAgreement : true }
-                ]
+                optional : [{ DtlsSrtpKeyAgreement : true }]
             });
 
         function gotStream(stream){
@@ -160,6 +157,7 @@ modules.define(
                     }
                 }
             },
+
             _finishCall : function(){
                 var icon = this.findBlockInside('icon');
 
@@ -185,6 +183,7 @@ modules.define(
                     this.remoteStream.stop();
                 }
             },
+
             _openUser : function(userId){
                 var pageBlock = this.findBlockOutside('page');
                 var listBlock = pageBlock.findBlockInside({ block : 'list', modName : 'type', modVal : 'users' });
@@ -195,6 +194,7 @@ modules.define(
                     }
                 });
             },
+
             _onCall : function(){
                 if(this.hasMod('disabled')) {
                     Notify.warning('Пользователя нет на сайте! Пригласите его, чтобы начать звонок.');
@@ -232,8 +232,7 @@ modules.define(
                         }).bind(this));
                 }
             },
-            _gotError : function(error){
-            },
+
             _gotIceCandidate : function gotIceCandidate(event){
                 if(event.candidate) {
                     this._sendMessage('webrtc', {
@@ -244,6 +243,7 @@ modules.define(
                     }, this._socketId);
                 }
             },
+
             _gotRemoteStream : function(event){
                 BEMDOM.update(
                     this.findBlockOutside('page')
@@ -261,9 +261,11 @@ modules.define(
 
                 this.remoteStream = event.stream;
             },
+
             _getSocketId : function(name){
                 return this[name + 'SocketId'];
             },
+
             _createOffer : function(){
                 pc.createOffer(
                     this._gotLocalDescription.bind(this),
@@ -271,6 +273,7 @@ modules.define(
                     { 'mandatory' : { 'OfferToReceiveAudio' : true, 'OfferToReceiveVideo' : true } }
                 );
             },
+
             _createAnswer : function(){
                 pc.createAnswer(
                     this._gotLocalDescription.bind(this),
@@ -278,13 +281,15 @@ modules.define(
                     { 'mandatory' : { 'OfferToReceiveAudio' : true, 'OfferToReceiveVideo' : true } }
                 );
             },
+
             _gotLocalDescription : function(description){
                 pc.setLocalDescription(description);
                 this._sendMessage('webrtc', description, this._socketId);
             },
-            //Socket
+
             _sendMessage : function(type, message, to){
                 message = { type : type, content : message, to : to };
+
                 io.socket.get('/csrfToken', function(data){
                     message._csrf = data._csrf;
                     io.socket.post('/webrtc/message', message);

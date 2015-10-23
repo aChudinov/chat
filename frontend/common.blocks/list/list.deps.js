@@ -9,7 +9,6 @@
         { block : 'list', elem : 'item', mods : { type : ['channels', 'users'] } },
         { block : 'user' },
         { block : 'notify' },
-        { block : 'events', elems : 'channels' },
         { block : 'keyboard', elem : 'codes' },
         { block : 'adding-input' }
     ]

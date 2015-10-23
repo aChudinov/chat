@@ -1,9 +1,8 @@
 modules.define(
     'list',
     ['i-bem__dom', 'BEMHTML', 'jquery', 'i-chat-api', 'i-store',
-        'notify', 'events__channels', 'keyboard__codes', 'editable-title', 'adding-input'],
-    function(provide, BEMDOM, BEMHTML, $, chatAPI, Store, Notify, channels, keyCodes, EditableTitle, AddingInput){
-
+        'notify', 'keyboard__codes', 'editable-title', 'adding-input'],
+    function(provide, BEMDOM, BEMHTML, $, chatAPI, Store, Notify, keyCodes, EditableTitle, AddingInput){
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
                 'js' : {
@@ -18,15 +17,19 @@ modules.define(
                             this.setMod(this._spin, 'visible');
                         }
 
-                        var shrimingEvents = channels('shriming-events');
-
                         Store.on('users-loaded', this._initializeLists, this);
-                        EditableTitle.on('channel-change-title', this._onChannelChangeTitle, this);
+                        Store.on('message-received', this._onMessageReceive, this);
+                        EditableTitle.on('title-changed', this._onChannelChangeTitle, this);
                         AddingInput.on('channel-created', this._onChannelCreate, this);
-
-                        shrimingEvents.on('channel-received-message', this._handleNewMessage, this);
                     }
                 }
+            },
+
+            destruct : function(){
+                Store.un('users-loaded');
+                Store.un('message-received');
+                EditableTitle.un('title-changed');
+                AddingInput.un('channel-created');
             },
 
             /**
@@ -36,11 +39,16 @@ modules.define(
              * @param {Object} data
              * @private
              */
-            _handleNewMessage : function(e, data){
-                var counter = this._getItemCounter(data.channelId);
+            _onMessageReceive : function(e, data){
+                var counter = this._getItemCounter(data.channel);
 
-                if(counter) counter.text(Number(counter.text()) + 1);
-                this.dropElemCache('item');
+                if(data.channel !== this._selectedChannelId){
+                    if(counter){
+                        counter.text(Number(counter.text()) + 1);
+                    }
+
+                    this.dropElemCache('item');
+                }
             },
 
             /**
@@ -49,13 +57,11 @@ modules.define(
              * @param {String} id
              */
             selectChannelById : function(id){
-                var _this = this;
-
                 this.findElem('item').each(function(index, item){
-                    if(_this.elemParams($(item)).channelId === id){
+                    if(this.elemParams($(item)).channelId === id){
                         $(item).click();
                     }
-                });
+                }.bind(this));
             },
 
             /**
@@ -63,23 +69,22 @@ modules.define(
              * простановки счетчика непрочитнных сообщений
              *
              * @param {String} channelId - ID канала
-             * @returns {Object|null} - Элемент counter счетчика непрочитанных сообщений канала
+             * @returns {Object} - Элемент counter счетчика непрочитанных сообщений канала
              *
              * @private
              */
             _getItemCounter : function(channelId){
-                var _this = this;
                 var counterElem;
 
                 this.elem('item').each(function(index, item){
-                    var itemParams = _this.elemParams($(item));
+                    var itemParams = this.elemParams($(item));
 
                     if(itemParams.channelId === channelId) {
-                        counterElem = $(_this.findElem('counter')[index]);
+                        counterElem = $(this.findElem('counter')[index]);
                     }
-                });
+                }.bind(this));
 
-                return counterElem ? counterElem : null;
+                return counterElem;
             },
 
             /**
@@ -184,9 +189,7 @@ modules.define(
                         },
                         content : {
                             block : 'user',
-                            js : {
-                                id : user.id
-                            },
+                            js : { userId : user.id },
                             mods : { presence : user.presence },
                             user : {
                                 name : user.name,
@@ -265,7 +268,7 @@ modules.define(
                 var itemParams = this.elemParams(item);
                 var counter = this._getItemCounter(itemParams.channelId);
 
-                if(type == 'channels') location.hash = e.target.innerText;
+                if(type == 'channels') location.hash = itemParams.name;
                 if(counter) counter.text('');
 
                 this.__self.instances.forEach(function(list){
@@ -274,11 +277,17 @@ modules.define(
 
                 this.setMod(item, 'current', true);
 
+                this._selectedChannelId = itemParams.channelId;
+
                 if(type == 'channels' && !itemParams.isMember){
                     this._joinChannel(itemParams.name);
                 }
 
-                this.emit('click-' + type, itemParams);
+                this.emit('channel-selected', {
+                    type : type,
+                    params : itemParams
+                });
+
                 this.dropElemCache('item');
             },
 

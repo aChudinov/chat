@@ -23,6 +23,17 @@ function(provide, BEM, chatAPI, channels, _, Notify){
     var _ims = [];
 
     var Store = {
+        /**
+         * Подписка на событие message от RTM
+         *
+         * @private
+         */
+        subscribeMessageUpdate : function(){
+            chatAPI.on('message', function(data){
+                this.emit('message-received', data);
+            }.bind(this));
+        },
+
         fetchUsers : function(){
             return chatAPI.get('users.list')
                 .then(function(data){

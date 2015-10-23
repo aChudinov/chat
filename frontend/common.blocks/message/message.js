@@ -18,7 +18,8 @@ provide(BEMDOM.decl(this.name, {}, {
      * @param {Object} message
      * @returns {Object}
      */
-    render : function(user, message){
+    render : function(message){
+        var user = Store.getUser(message.user) || {};
         var username = user ? (user.real_name || user.name) : 'Бот какой-то';
 
         return BEMHTML.apply(

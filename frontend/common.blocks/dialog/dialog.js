@@ -1,11 +1,11 @@
 modules.define(
     'dialog',
     ['i-bem__dom', 'BEMHTML', 'socket-io', 'i-chat-api', 'i-store', 'user', 'list', 'speech',
-        'message', 'keyboard__codes', 'jquery', 'notify', 'events__channels', 'functions__throttle'],
-    function(provide, BEMDOM, BEMHTML, io, chatAPI, Store, User, List, Speech, Message, keyCodes, $, Notify, channels, throttle){
+        'message', 'keyboard__codes', 'jquery', 'notify', 'functions__throttle'],
+    function(provide, BEMDOM, BEMHTML, io, chatAPI, Store, User, List, Speech, Message, keyCodes, $, Notify, throttle){
         var EVENT_METHODS = {
-            'click-channels' : 'channels',
-            'click-users' : 'im'
+            'channels' : 'channels',
+            'users' : 'im'
         };
 
         provide(BEMDOM.decl(this.name, {
@@ -15,8 +15,12 @@ modules.define(
                         this._textarea = this.findBlockInside('textarea');
                         this._container = this.elem('container');
 
-                        List.on('click-channels click-users', this._onChannelSelect, this);
+                        Store.subscribeMessageUpdate();
+
+                        Store.on('message-received', this._onMessageReceive, this);
+                        List.on('channel-selected', this._onChannelSelect, this);
                         User.on('click-user', this._onUserSelect, this);
+
                         Speech.on('write-message', function(e, data){
                             if(data && data.text){
                                 this._sendMessage(data.text);
@@ -24,35 +28,30 @@ modules.define(
                         }, this);
 
                         this._textarea.bindTo('keydown', this._onConsoleKeyDown.bind(this));
-                        this.bindTo('history', 'wheel DOMMouseScroll mousewheel', this._onHistoryScroll.bind(this));
-                        this._subscribeMessageUpdate();
+                        this.bindTo('history', 'wheel DOMMouseScroll mousewheel', this._onHistoryScroll);
                     }
                 }
             },
 
             destruct : function(){
-                List.un('click-channels click-users');
+                Store.un('message-received');
+                List.un('channel-selected');
+                User.un('click-user');
+                Speech.un('write-message');
             },
 
             /**
-             * Подписка на событие message от RTM
+             * Обработка новых сообщений, пришедших через RTM
              *
+             * @param {Event} e
+             * @param {Object} data
              * @private
              */
-            _subscribeMessageUpdate : function(){
-                var _this = this;
-                var shrimingEvents = channels('shriming-events');
-                var generatedMessage;
-
-                chatAPI.on('message', function(data){
-                    if(_this._channelId && data.channel === _this._channelId){
-                        generatedMessage = _this._generateMessage(data);
-                        BEMDOM.append(_this._container, generatedMessage);
-                        _this._scrollToBottom();
-                    }else{
-                        shrimingEvents.emit('channel-received-message', { channelId : data.channel });
-                    }
-                });
+            _onMessageReceive : function(e, data){
+                if(this._channelId && data.channel === this._channelId){
+                    BEMDOM.append(this._container, Message.render(data));
+                    this._scrollToBottom();
+                }
             },
 
             /**
@@ -66,14 +65,14 @@ modules.define(
                 var dialogControlBlock = this.findBlockInside('dialog-controls');
                 var callButton = dialogControlBlock.findElem('call');
 
-                if(userParams.presence != 'local') {
+                if(userParams.presence !== 'local') {
                     dialogControlBlock.setMod(callButton, 'disabled');
-                    dialogControlBlock.setMod(callButton, 'disabled');
+
                     return;
                 }
 
                 dialogControlBlock.delMod(callButton, 'disabled');
-                callButton.data('slackId', userParams.id);
+                callButton.data('slackId', userParams.userId);
             },
 
             /**
@@ -84,31 +83,19 @@ modules.define(
              * @private
              */
             _onChannelSelect : function(e, data){
-                this._channelId = data.channelId;
-                this._channelType = EVENT_METHODS[e.type];
+                var params = data.params;
+
+                this._channelId = params.channelId;
+                this._channelType = EVENT_METHODS[data.type];
                 this._tsOffset = 0;
 
-                this.elem('name').text(data.name);
+                this.elem('name').text(params.name);
                 this.findBlockInside('editable-title')
                     .reset()
-                    .setVal(this._channelId, data.title, (e.type == 'click-channels'));
+                    .setVal(this._channelId, params.title, (data.type == 'channels'));
 
-                switch(e.type) {
-                    case 'click-channels':
-                        this.findBlockInside('dialog-controls').setMod('type', 'channels');
-                        this.setMod(this.elem('name'), 'type', 'channels');
-
-                        break;
-
-                    case 'click-users':
-                        this.findBlockInside('dialog-controls').setMod('type', 'user');
-                        this.setMod(this.elem('name'), 'type', 'users');
-
-                        break;
-
-                    default:
-
-                }
+                this.setMod(this.elem('name'), 'type', data.type);
+                this.findBlockInside('dialog-controls').setMod('type', data.type);
 
                 BEMDOM.update(this._container, []);
                 this.setMod(this.elem('spin'), 'visible');
@@ -160,22 +147,23 @@ modules.define(
              */
             _getData : function(infiniteScroll){
                 var _this = this;
-                _this._scrollHeight = _this.elem('history')[0].scrollHeight;
 
+                this._scrollHeight = this.elem('history')[0].scrollHeight;
                 this.elem('blank').hide();
 
                 chatAPI.post(this._channelType + '.history', {
                     channel : this._channelId,
-                    latest : infiniteScroll? this._tsOffset : 0
+                    latest : infiniteScroll ? this._tsOffset : 0
                 })
                     .then(function(resData){
                         var messages = resData.messages.reverse();
                         var messagesList = messages.map(function(message){
-                            return _this._generateMessage(message);
+                            return Message.render(message);
                         });
 
                         if(messages.length){
                             _this._markChannelRead(messages[messages.length - 1].ts);
+
                             _this._tsOffset = messages[0].ts;
                         }else{
                             _this.elem('blank').show();
@@ -196,19 +184,6 @@ modules.define(
                     .always(function(){
                         _this.delMod(_this.elem('spin'), 'visible');
                     });
-            },
-
-            /**
-             * Парсинг сообщения
-             *
-             * @param {String} message
-             * @returns {Object}
-             * @private
-             */
-            _generateMessage : function(message){
-                var user = Store.getUser(message.user) || {};
-
-                return Message.render(user, message);
             },
 
             /**

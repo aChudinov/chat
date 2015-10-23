@@ -142,7 +142,7 @@ modules.define(
                         if (newTitle){
                             _this._title.text(newTitle);
                             _this.delMod('empty');
-                            _this.emit('channel-change-title', { newTitle : newTitle });
+                            _this.emit('title-changed', { newTitle : newTitle });
                         }
                     })
                     .catch(function(error){
