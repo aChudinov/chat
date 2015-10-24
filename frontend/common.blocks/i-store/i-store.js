@@ -21,12 +21,13 @@ function(provide, BEM, chatAPI, channels, _, Notify){
     var _users = [];
     var _channels = [];
     var _ims = [];
+    var _consoleMessages = {};
 
     var Store = {
         /**
          * Подписка на событие message от RTM
          *
-         * @private
+         * @returns {Promise}
          */
         subscribeMessageUpdate : function(){
             chatAPI.on('message', function(data){
@@ -34,6 +35,11 @@ function(provide, BEM, chatAPI, channels, _, Notify){
             }.bind(this));
         },
 
+        /**
+         * Загрузка списка пользователей
+         *
+         * @returns {Promise}
+         */
         fetchUsers : function(){
             return chatAPI.get('users.list')
                 .then(function(data){
@@ -48,6 +54,11 @@ function(provide, BEM, chatAPI, channels, _, Notify){
                 });
         },
 
+        /**
+         * Загрузка списка каналов
+         *
+         * @returns {Promise}
+         */
         fetchChannels : function(){
             return chatAPI.get('channels.list')
                 .then(function(data){
@@ -62,6 +73,11 @@ function(provide, BEM, chatAPI, channels, _, Notify){
                 });
         },
 
+        /**
+         * Загрузка списка диалогов
+         *
+         * @returns {Promise}
+         */
         fetchIms : function(){
             return chatAPI.get('im.list')
                 .then(function(data){
@@ -76,36 +92,94 @@ function(provide, BEM, chatAPI, channels, _, Notify){
                 });
         },
 
+        /**
+         * Получение информации о пользователе через id
+         *
+         * @param {String} id
+         * @returns {Object}
+         */
         getUser : function(id){
             var user = _.find(_users, { id : id });
 
             return user || BOT_PROFILE;
         },
 
+        /**
+         * Поулучение списка пользователей
+         *
+         * @returns {Array}
+         */
         getUsers : function(){
             return _users;
         },
 
+        /**
+         * Получение информации о канале через id
+         *
+         * @param {String} id
+         * @returns {Object}
+         */
         getChannel : function(id){
             var channel = _.find(_channels, { id : id });
 
             return channel || {};
         },
 
+        /**
+         * Поулучение списка каналов
+         *
+         * @returns {Array}
+         */
         getChannels : function(){
             return _channels;
         },
 
+        /**
+         * Получение информации о приватном диалоге через id
+         *
+         * @param {String} id
+         * @returns {Object}
+         */
         getIm : function(id){
             var im = _.find(_ims, { id : id });
 
             return im || {};
         },
 
+        /**
+         * Поулучение списка приватных диалогов
+         *
+         * @returns {Array}
+         */
         getIms : function(){
             return _ims;
         },
 
+        /**
+         * Сохранить введенное и неотправленное в канале сообщение
+         *
+         * @param {String} channelId
+         * @param {String} value
+         */
+        setConsoleMessage : function(channelId, value){
+            _consoleMessages[channelId] = value;
+        },
+
+        /**
+         * Сохранить введенное и неотправленное в канале сообщение
+         *
+         * @param channelId
+         * @returns {String}
+         */
+        getConsoleMessage : function(channelId){
+            return _consoleMessages[channelId] || '';
+        },
+
+        /**
+         * Поулучение списка доступных смайликов
+         *
+         * @returns {Array}
+         */
         getEmojiList : function(){
             return EMOJI_LIST;
         }

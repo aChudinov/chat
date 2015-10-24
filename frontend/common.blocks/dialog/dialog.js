@@ -85,6 +85,8 @@ modules.define(
             _onChannelSelect : function(e, data){
                 var params = data.params;
 
+                Store.setConsoleMessage(this._channelId, this._textarea.getVal());
+
                 this._channelId = params.channelId;
                 this._channelType = EVENT_METHODS[data.type];
                 this._tsOffset = 0;
@@ -100,7 +102,12 @@ modules.define(
                 BEMDOM.update(this._container, []);
                 this.setMod(this.elem('spin'), 'visible');
                 this.dropElemCache('message');
-                this._getData();
+
+                this._getData().then(function(){
+                    var textareaValue = Store.getConsoleMessage(this._channelId);
+
+                    this._textarea.setVal(textareaValue);
+                }.bind(this));
             },
 
             /**
@@ -149,9 +156,10 @@ modules.define(
                 var _this = this;
 
                 this._scrollHeight = this.elem('history')[0].scrollHeight;
+                this._textarea.setMod('disabled');
                 this.elem('blank').hide();
 
-                chatAPI.post(this._channelType + '.history', {
+                return chatAPI.post(this._channelType + '.history', {
                     channel : this._channelId,
                     latest : infiniteScroll ? this._tsOffset : 0
                 })
@@ -183,6 +191,7 @@ modules.define(
                     })
                     .always(function(){
                         _this.delMod(_this.elem('spin'), 'visible');
+                        _this._textarea.delMod('disabled');
                     });
             },
 
