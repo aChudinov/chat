@@ -1,8 +1,14 @@
+/**
+ * @module Adding-input
+ */
 modules.define(
     'adding-input',
     ['i-bem__dom', 'i-chat-api', 'keyboard__codes'],
     function(provide, BEMDOM, chatAPI, keyCodes){
-
+        /**
+         * @exports
+         * @class adding-input
+         */
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
                 'js' : {

@@ -1,12 +1,10 @@
 /**
  * @module Editable-input
  */
-
 modules.define(
     'editable-title',
     ['i-bem__dom', 'i-chat-api', 'keyboard__codes', 'notify'],
     function(provide, BEMDOM, chatAPI, keyCodes, Notify){
-
         /**
          * @exports
          * @class editable-input
@@ -59,13 +57,11 @@ modules.define(
              * @returns {Object}
              */
             reset : function(){
-                this._input
-                    .val('')
-                    .hide();
+                this._input.val('');
+                this.delMod(this._input, 'visible');
 
-                this._title
-                    .text('')
-                    .show();
+                this._title.text('');
+                this.setMod(this._title, 'visible');
 
                 return this;
             },
@@ -76,8 +72,8 @@ modules.define(
              * @private
              */
             _handleTitleClick : function(){
-                this._input.show();
-                this._title.hide();
+                this.setMod(this._input, 'visible');
+                this.delMod(this._title, 'visible');
 
                 this._input.find('input')
                     .val(this._title.text())
@@ -96,8 +92,8 @@ modules.define(
                 if(e.keyCode === keyCodes.ENTER && this._validateInput(value)){
                     this._saveTitle(value);
                 }else if(e.keyCode === keyCodes.ESC){
-                    this._input.hide();
-                    this._title.show();
+                    this.delMod(this._input, 'visible');
+                    this.setMod(this._title, 'visible');
                 }
             },
 
@@ -105,14 +101,11 @@ modules.define(
              * Валидация инпута, при ошибке показывается Notify
              *
              * @param {String} value - Новое значение заголовка
-             * @returns {boolean} - Результат валидации инпута
+             * @returns {Boolean} - Результат валидации инпута
              * @private
              */
             _validateInput : function(value){
-                if(value){
-                    this.delMod(this._input, 'error');
-                }else{
-                    this.setMod(this._input, 'error');
+                if(!value){
                     Notify.info('Введите тему канала');
                 }
 
@@ -129,7 +122,7 @@ modules.define(
                 var _this = this;
 
                 this.findBlockInside('input').setMod('disabled');
-                this._input.hide();
+                this.delMod(this._input, 'visible');
                 this.setMod(this._spin, 'visible');
 
                 chatAPI.post('channels.setTopic', {
@@ -149,7 +142,7 @@ modules.define(
                         Notify.error(error, 'Ошибка изменения темы канала');
                     })
                     .always(function(){
-                        _this._title.show();
+                        _this.setMod(_this._title, 'visible');
                         _this.delMod(_this._spin, 'visible');
                         _this.findBlockInside('input').delMod('disabled');
                     });
