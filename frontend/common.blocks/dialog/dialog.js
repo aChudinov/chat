@@ -137,13 +137,9 @@ modules.define(
                 chatAPI.post(this._channelType + '.mark', {
                     channel : this._channelId,
                     ts : timestamp
-                })
-                    .then(function(data){
-                        console.log('Channel mark: ', data);
-                    })
-                    .catch(function(error){
-                        Notify.error(error, 'Ошибка при открытии канала');
-                    });
+                }).catch(function(error){
+                    Notify.error(error, 'Ошибка при открытии канала');
+                });
             },
 
             /**
@@ -246,8 +242,8 @@ modules.define(
 
                 chatAPI.post('chat.postMessage', {
                     text : message,
-                    channel : _this._channelId,
-                    username : _this.params.username,
+                    channel : this._channelId,
+                    username : this.params.username,
                     as_user : true
                 })
                     .then(function(){

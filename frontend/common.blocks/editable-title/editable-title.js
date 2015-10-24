@@ -57,11 +57,10 @@ modules.define(
              * @returns {Object}
              */
             reset : function(){
-                this._input.val('');
-                this.delMod(this._input, 'visible');
-
-                this._title.text('');
                 this.setMod(this._title, 'visible');
+                this.delMod(this._input, 'visible');
+                this._input.val('');
+                this._title.text('');
 
                 return this;
             },

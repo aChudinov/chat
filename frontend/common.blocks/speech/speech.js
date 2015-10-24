@@ -27,6 +27,11 @@ modules.define(
                 }
             },
 
+            /**
+             * Обработка клика
+             *
+             * @private
+             */
             _handleClick : function(){
                 this._requestSpeech()
                     .then(this._firstCommand)
@@ -40,6 +45,13 @@ modules.define(
                     }.bind(this));
             },
 
+            /**
+             * Первый запрос для распознавания типа действия
+             *
+             * @param {String} text
+             * @returns {Promise|String}
+             * @private
+             */
             _firstCommand : function(text){
                 var action;
 
@@ -64,16 +76,37 @@ modules.define(
                 return action;
             },
 
+            /**
+             * Запуск второго запроса после распознавания типа действия
+             *
+             * @param {String} action - действие
+             * @returns {Promise}
+             * @private
+             */
             _secondCommand : function(action){
                 this._action = action;
 
                 return this._requestSpeech(ACTION_QUESTIONS[action]);
             },
 
+            /**
+             * Генерация БЭМ-события
+             *
+             * @param {String} text
+             * @private
+             */
             _emitAction : function(text){
                 this.emit(this._action, { text : text });
             },
 
+            /**
+             * Запрос к Yandex SpeechKit https://speechkit.yandex.ru/dev/solutions/cloud
+             *
+             * @param {String} [command='Произнесите команду'] - Текст команды
+             * @param {String} [model='freeform'] - Модель данных для распознавания
+             * @returns {Promise}
+             * @private
+             */
             _requestSpeech : function(command, model){
                 var deferred = vow.defer();
 
