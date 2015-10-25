@@ -1,7 +1,6 @@
 var Slack = require('slack-node');
 
 var slackApi = {
-
     init : function(req){
         Passport.findOne({
             identifier : req.user.id
@@ -26,7 +25,6 @@ var slackApi = {
             sails.sockets.emit(sails.sockets.id(req.socket), 'slackInited');
         });
     }
-
 };
 
 module.exports = slackApi;

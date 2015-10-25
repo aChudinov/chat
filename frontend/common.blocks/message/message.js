@@ -9,7 +9,26 @@ function(provide, BEMDOM, BEMHTML, Store, emojify, marked){
  * @exports
  * @class message
  */
-provide(BEMDOM.decl(this.name, {}, {
+provide(BEMDOM.decl(this.name, {
+    onSetMod : {
+        'js' : {
+            'inited' : function(){
+                this._modal = this.findBlockInside('modal');
+                this.bindTo('image', 'click', this._onImageClick);
+            }
+        }
+    },
+
+    /**
+     * Увеличение изображения при клике
+     *
+     * @param {Event} e
+     * @private
+     */
+    _onImageClick : function(){
+        this._modal.setMod('visible', true);
+    }
+}, {
 
     /**
      * Возвращает элемент сообщения
@@ -31,7 +50,7 @@ provide(BEMDOM.decl(this.name, {}, {
             content : [{
                 elem : 'content',
                 attrs : { 'data-time' : this._getFormattedDate(message.ts) },
-                content : this._parseMessage(message.text)
+                content : this._parseMessage(message)
             }]
         };
 
@@ -62,6 +81,9 @@ provide(BEMDOM.decl(this.name, {}, {
         return BEMHTML.apply(messageBEMJSON);
     },
 
+    /**
+     * Сбросить user_id последнего сообщения в группе. Выполняется при смене канала
+     */
     resetLastMessage : function(){
         this._lastMessageUserId = undefined;
     },
@@ -89,11 +111,17 @@ provide(BEMDOM.decl(this.name, {}, {
      * @private
      */
     _parseMessage : function(message){
-        message = this._parseCodes(message);
-        message = this._parseSmiles(message);
-        message = this._parseMarkup(message);
+        var messageText = message.text;
 
-        return message;
+        if(message.upload && message.file && message.file.mimetype.indexOf('image/') === 0){
+            return this._parseImage(message.file);
+        }
+
+        messageText = this._parseCodes(messageText);
+        messageText = this._parseSmiles(messageText);
+        messageText = this._parseMarkup(messageText);
+
+        return messageText;
     },
 
     /**
@@ -169,6 +197,41 @@ provide(BEMDOM.decl(this.name, {}, {
                 cls : 'emoji emoji-' + emojiName
             });
         });
+    },
+
+    /**
+     * Вставка в сообщение превью загруженного изображения
+     *
+     * @param {Object} fileData
+     * @returns {Object}
+     * @private
+     */
+    _parseImage : function(fileData){
+        return BEMHTML.apply([
+            {
+                block : 'image',
+                mix : { block : 'message', elem : 'image' },
+                url : fileData.thumb_360,
+                alt : fileData.title,
+                title : fileData.title,
+                width : fileData.thumb_360_w,
+                height : fileData.thumb_360_h
+            },
+            {
+                block : 'modal',
+                js : { visible : false },
+                mods : { autoclosable : true, theme : 'islands' },
+                content : {
+                    block : 'image',
+                    mix : { block : 'message', elem : 'image' },
+                    url : fileData.url,
+                    alt : fileData.title,
+                    title : fileData.title,
+                    width : fileData.original_w,
+                    height : fileData.original_h
+                }
+            }
+        ]);
     }
 }));
 

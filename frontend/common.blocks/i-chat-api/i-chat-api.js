@@ -16,9 +16,11 @@ modules.define('i-chat-api', ['socket-io', 'jquery', 'vow', 'eventemitter2', 'lo
             'msg_too_long' : 'Слишком длинное сообщение',
             'name_taken' : 'Невозможно создать канал с данным именем',
             'no_channel' : 'Необходимо ввести название канала',
+            'no_file_data' : 'Неверно переданы данные для загрузки файла',
             'no_text' : 'Введите текст сообщения',
             'not_authed' : 'Ошибка передачи токена аутентификация',
             'not_in_channel' : 'У вас нет доступа к каналу',
+            'posting_to_general_channel_denied' : 'Добавление файлов в канал #general запрещено',
             'rate_limited' : 'Достигнут лимит сообщений',
             'restricted_action' : 'Действие запрещено',
             'too_long' : 'Название канала должно быть не более 250 символов',
@@ -71,36 +73,65 @@ modules.define('i-chat-api', ['socket-io', 'jquery', 'vow', 'eventemitter2', 'lo
                 this._getSocketURL();
             }),
 
+            /**
+             * Запрос через Socket
+             *
+             * @param {String} [action] - метод Slack Web API
+             * @param {Object} [params] - передаваемые данные
+             * @param {String} [method='get'] - метод
+             * @returns {Promise}
+             * @private
+             */
             _connect : function(action, params, method){
+                return this._getCSRFToken()
+                    .then(this._xhr.bind(this, action, params, method));
+            },
+
+            /**
+             * Запрос CSRF-токена
+             *
+             * @returns {Promise}
+             * @private
+             */
+            _getCSRFToken : function(){
+                return new vow.Promise(function(resolve, reject){
+                    $.get('/csrfToken')
+                        .done(function(data){
+                            resolve(data);
+                        })
+                        .fail(function(error){
+                            reject(error, 'Ошибка получения CSRF-токена');
+                        });
+                });
+            },
+
+            /**
+             * Запрос к Web API через Socket
+             *
+             * @private
+             */
+            _xhr : function(action, params, method, csrfData){
                 params = params || {};
                 method = method || 'get';
 
                 return new vow.Promise(function(resolve, reject){
-                    $.get('/csrfToken')
-                        .done(function(data){
-                            var url = '/slack/' + action;
+                    $.extend(params, { _csrf : csrfData._csrf });
 
-                            $.extend(params, { _csrf : data._csrf });
+                    io.socket[method]('/slack/' + action, params, function(resData, jwres){
+                        var data = resData.data;
 
-                            io.socket[method](url, params, function(resData, jwres){
-                                var data = resData.data;
+                        if(!resData || !data || jwres.statusCode !== 200) {
+                            reject('Ошибка подключения к API');
 
-                                if(!resData || !data || jwres.statusCode !== 200) {
-                                    reject('Ошибка подключения к API');
+                            return;
+                        }
 
-                                    return;
-                                }
+                        if(!data.ok && data.error){
+                            reject(ERRORS[data.error] || 'Неизвестная ошибка');
+                        }
 
-                                if(!data.ok && data.error){
-                                    reject(ERRORS[data.error] || 'Неизвестная ошибка');
-                                }
-
-                                resolve(data);
-                            });
-                        })
-                        .fail(function(err){
-                            reject(err);
-                        });
+                        resolve(data);
+                    });
                 });
             },
 
