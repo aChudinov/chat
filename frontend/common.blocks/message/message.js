@@ -42,7 +42,7 @@ provide(BEMDOM.decl(this.name, {
         var user = Store.getUser(message.user) || {};
         var username = user ? (user.real_name || user.name) : 'Бот какой-то';
         var isFirstInGroup = (user.id !== this._lastMessageUserId) || !this._lastMessageUserId;
-        var isOlderThanDay = message.ts - this._lastMessageTs > 1*24*60*60;
+        var isOlderThanDay = (message.ts - this._lastMessageTs > 1*24*60*60) || !this._lastMessageTs;
 
         var messageBEMJSON = [{
             block : 'message',

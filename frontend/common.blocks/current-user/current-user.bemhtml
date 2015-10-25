@@ -11,7 +11,7 @@ block('current-user')(
                     elem : 'avatar',
                     content : {
                         block : 'avatar',
-                        mods : { size : 's' },
+                        mods : { size : 'm' },
                         user : user
                     }
                 },
