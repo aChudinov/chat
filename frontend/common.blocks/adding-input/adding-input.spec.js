@@ -1,7 +1,7 @@
 modules.define(
     'spec',
-    ['adding-input', 'i-bem__dom', 'jquery', 'BEMHTML', 'sinon', 'keyboard__codes'],
-    function(provide, AddingInput, BEMDOM, $, BEMHTML, sinon, keyCodes){
+    ['adding-input', 'i-bem__dom', 'jquery', 'BEMHTML', 'keyboard__codes'],
+    function(provide, AddingInput, BEMDOM, $, BEMHTML, keyCodes){
 
 describe('adding-input', function(){
     var addingInput;

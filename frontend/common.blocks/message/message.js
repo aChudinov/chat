@@ -4,6 +4,7 @@
 modules.define('message',
     ['i-bem__dom', 'BEMHTML', 'i-store', 'emojify', 'marked'],
 function(provide, BEMDOM, BEMHTML, Store, emojify, marked){
+    var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября' ,'ноября' ,'декабря'];
 
 /**
  * @exports
@@ -41,21 +42,22 @@ provide(BEMDOM.decl(this.name, {
         var user = Store.getUser(message.user) || {};
         var username = user ? (user.real_name || user.name) : 'Бот какой-то';
         var isFirstInGroup = (user.id !== this._lastMessageUserId) || !this._lastMessageUserId;
+        var isOlderThanDay = message.ts - this._lastMessageTs > 1*24*60*60;
 
-        var messageBEMJSON = {
+        var messageBEMJSON = [{
             block : 'message',
             js : true,
             mix : [{ block : 'dialog', elem : 'message' }],
-            mods : { group : !isFirstInGroup },
+            mods : { group : !isFirstInGroup && !isOlderThanDay },
             content : [{
                 elem : 'content',
-                attrs : { 'data-time' : this._getFormattedDate(message.ts) },
+                attrs : { 'data-time' : this._getFormattedTime(message.ts) },
                 content : this._parseMessage(message)
             }]
-        };
+        }];
 
-        if(isFirstInGroup){
-            messageBEMJSON.content.unshift(
+        if(isFirstInGroup || isOlderThanDay){
+            messageBEMJSON[0].content.unshift(
                 {
                     block : 'avatar',
                     user : {
@@ -71,21 +73,37 @@ provide(BEMDOM.decl(this.name, {
                 },
                 {
                     elem : 'time',
-                    content : this._getFormattedDate(message.ts)
+                    content : this._getFormattedTime(message.ts)
                 }
             );
 
             this._lastMessageUserId = user.id;
         }
 
+        if(isOlderThanDay){
+            messageBEMJSON.unshift({
+                block : 'message',
+                elem : 'delimiter',
+                content : {
+                    block : 'message',
+                    elem : 'date',
+                    tag : 'span',
+                    content : this._getFormattedDate(message.ts)
+                }
+            });
+        }
+
+        this._lastMessageTs = message.ts;
+
         return BEMHTML.apply(messageBEMJSON);
     },
 
     /**
-     * Сбросить user_id последнего сообщения в группе. Выполняется при смене канала
+     * Сбросить данные последнего сообщения в группе. Выполняется при смене канала
      */
     resetLastMessage : function(){
         this._lastMessageUserId = undefined;
+        this._lastMessageTs = undefined;
     },
 
     /**
@@ -95,12 +113,33 @@ provide(BEMDOM.decl(this.name, {
      * @returns {String}
      * @private
      */
-    _getFormattedDate : function(ts){
+    _getFormattedTime : function(ts){
         var date = new Date(Math.round(ts) * 1000);
         var hours = ('0' + date.getHours()).slice(-2);
         var minutes = ('0' + date.getMinutes()).slice(-2);
 
         return hours + ':' + minutes;
+    },
+
+    _getFormattedDate : function(ts){
+        var date = new Date(Math.round(ts) * 1000);
+        var day = date.getDate();
+        var month = date.getMonth();
+        var year = date.getFullYear();
+
+        var today = new Date();
+        var yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        if(day === today.getDate() && month === today.getMonth() && year === today.getFullYear()){
+            return 'Сегодня';
+        }
+
+        if(day === yesterday.getDate() && month === yesterday.getMonth() && year === yesterday.getFullYear()){
+            return 'Вчера';
+        }
+
+        return day + ' ' + MONTHS[month] + ' ' + year + ' года';
     },
 
     /**
@@ -156,7 +195,7 @@ provide(BEMDOM.decl(this.name, {
                 id = sequence.substr(1);
                 message = message.replace('<' + pipedSequence + '>', '@' + Store.getUser(id).name);
             }else if(sequence.charAt(0) === '!'){
-                // Спец. команды Slack
+                message = message.replace('<' + pipedSequence + '>', pipedSequence.slice(1));
             }else{
                 message = message.replace('<' + pipedSequence + '>', BEMHTML.apply({
                     block : 'link',
