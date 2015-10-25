@@ -17,7 +17,7 @@ modules.define(
                             _this._fetchTitleInfo();
                         });
 
-                        this.elem('menu').on('click', this._toggleMenuIcon.bind(this));
+                        this.bindTo('menu', 'click', this._toggleMenuIcon);
                         List.on('click-channels click-users', this._toggleMenuIcon, this);
                     }
                 }

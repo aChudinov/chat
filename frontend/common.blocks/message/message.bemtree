@@ -8,7 +8,7 @@ block('message')(
             },
             {
                 elem: 'username',
-                content: 'Maxim'
+                content: 'Неопознанный пользователь'
             },
             {
                 elem: 'time',
@@ -16,7 +16,7 @@ block('message')(
             },
             {
                 elem: 'content',
-                content: 'Hello!'
+                content: 'Неопознанное сообщение'
             }
         ];
     })

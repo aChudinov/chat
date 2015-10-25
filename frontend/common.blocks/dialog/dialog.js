@@ -86,6 +86,7 @@ modules.define(
                 var params = data.params;
 
                 Store.setConsoleMessage(this._channelId, this._textarea.getVal());
+                Message.resetLastMessage();
 
                 this._channelId = params.channelId;
                 this._channelType = EVENT_METHODS[data.type];

@@ -21,37 +21,49 @@ provide(BEMDOM.decl(this.name, {}, {
     render : function(message){
         var user = Store.getUser(message.user) || {};
         var username = user ? (user.real_name || user.name) : 'Бот какой-то';
+        var isFirstInGroup = (user.id !== this._lastMessageUserId) || !this._lastMessageUserId;
 
-        return BEMHTML.apply(
-            {
-                block : 'message',
-                js : true,
-                mix : [{ block : 'dialog', elem : 'message' }],
-                content : [
-                    {
-                        block : 'avatar',
-                        user : {
-                            name : username,
-                            image_48 : user.profile.image_48
-                        },
-                        mods : { size : 'm' },
-                        mix : { block : 'message', elem : 'avatar' }
+        var messageBEMJSON = {
+            block : 'message',
+            js : true,
+            mix : [{ block : 'dialog', elem : 'message' }],
+            mods : { group : !isFirstInGroup },
+            content : [{
+                elem : 'content',
+                attrs : { 'data-time' : this._getFormattedDate(message.ts) },
+                content : this._parseMessage(message.text)
+            }]
+        };
+
+        if(isFirstInGroup){
+            messageBEMJSON.content.unshift(
+                {
+                    block : 'avatar',
+                    user : {
+                        name : username,
+                        image_48 : user.profile.image_48
                     },
-                    {
-                        elem : 'username',
-                        content : username
-                    },
-                    {
-                        elem : 'time',
-                        content : this._getSimpleDate(message.ts)
-                    },
-                    {
-                        elem : 'content',
-                        content : this._parseMessage(message.text)
-                    }
-                ]
-            }
-        );
+                    mods : { size : 'm' },
+                    mix : { block : 'message', elem : 'avatar' }
+                },
+                {
+                    elem : 'username',
+                    content : username
+                },
+                {
+                    elem : 'time',
+                    content : this._getFormattedDate(message.ts)
+                }
+            );
+
+            this._lastMessageUserId = user.id;
+        }
+
+        return BEMHTML.apply(messageBEMJSON);
+    },
+
+    resetLastMessage : function(){
+        this._lastMessageUserId = undefined;
     },
 
     /**
@@ -61,7 +73,7 @@ provide(BEMDOM.decl(this.name, {}, {
      * @returns {String}
      * @private
      */
-    _getSimpleDate : function(ts){
+    _getFormattedDate : function(ts){
         var date = new Date(Math.round(ts) * 1000);
         var hours = ('0' + date.getHours()).slice(-2);
         var minutes = ('0' + date.getMinutes()).slice(-2);

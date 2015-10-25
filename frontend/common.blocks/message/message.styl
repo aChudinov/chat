@@ -20,7 +20,7 @@
 
     &__content
         margin-top 2px
-        width 100%
+        width 98%
 
         p
             white-space pre-wrap
@@ -42,3 +42,12 @@
         position absolute
         top 0
         left -32px
+
+    &_group
+        .message__content:hover:before
+            content attr(data-time)
+            font-size 10px
+            color #777
+            position absolute
+            left -20px
+            top 3px
