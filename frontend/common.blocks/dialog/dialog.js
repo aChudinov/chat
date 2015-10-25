@@ -50,7 +50,7 @@ modules.define(
             _onMessageReceive : function(e, data){
                 if(this._channelId && data.channel === this._channelId){
                     BEMDOM.append(this._container, Message.render(data));
-                    this._scrollToBottom();
+                    this._scrollToBottom(true);
                 }
             },
 
@@ -195,14 +195,20 @@ modules.define(
             /**
              * Скролл содержимого диалога вниз на загруженное количество сообщений
              *
+             * @param {Boolean} isFull - прокрутка к самому последнему сообщению
              * @private
              */
-            _scrollToBottom : function(){
+            _scrollToBottom : function(isFull){
                 var historyElement = this.elem('history');
                 var scrollHeight;
 
                 if(historyElement.length){
-                    scrollHeight = historyElement[0].scrollHeight - this._scrollHeight;
+                    scrollHeight = historyElement[0].scrollHeight;
+
+                    if(!isFull){
+                        scrollHeight -= this._scrollHeight;
+                    }
+
                     $(historyElement).scrollTop(scrollHeight);
                 }
             },

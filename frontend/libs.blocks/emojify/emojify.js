@@ -351,8 +351,7 @@ modules.define('emojify', function(provide){
     })();
 
     emojify.setConfig({
-        mode : 'sprite',
-        ignore_emoticons : true
+        mode : 'sprite'
     });
 
     provide(emojify);
