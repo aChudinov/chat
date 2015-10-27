@@ -1,8 +1,8 @@
 modules.define(
     'list',
     ['i-bem__dom', 'BEMHTML', 'jquery', 'i-chat-api', 'i-store',
-        'notify', 'keyboard__codes', 'editable-title', 'adding-input'],
-    function(provide, BEMDOM, BEMHTML, $, chatAPI, Store, Notify, keyCodes, EditableTitle, AddingInput){
+        'notify', 'keyboard__codes', 'editable-title', 'adding-input', 'message'],
+    function(provide, BEMDOM, BEMHTML, $, chatAPI, Store, Notify, keyCodes, EditableTitle, AddingInput, Message){
         provide(BEMDOM.decl(this.name, {
             onSetMod : {
                 'js' : {
@@ -21,6 +21,7 @@ modules.define(
                         Store.on('message-received', this._onMessageReceive, this);
                         EditableTitle.on('title-changed', this._onChannelChangeTitle, this);
                         AddingInput.on('channel-created', this._onChannelCreate, this);
+                        Message.on('channel-referenced', this._selectChannelById, this);
                     }
                 }
             },
@@ -56,9 +57,11 @@ modules.define(
              *
              * @param {String} id
              */
-            selectChannelById : function(id){
+            _selectChannelById : function(e, data){
+                var channelId = (typeof data === 'object') ? data.channelId : e;
+
                 this.findElem('item').each(function(index, item){
-                    if(this.elemParams($(item)).channelId === id){
+                    if(this.elemParams($(item)).channelId === channelId){
                         $(item).click();
                     }
                 }.bind(this));
@@ -303,7 +306,7 @@ modules.define(
                 this.dropElemCache('item');
 
                 this._initializeLists()
-                    .then(this.selectChannelById.bind(this, data.id));
+                    .then(this._selectChannelById.bind(this, data.id));
             },
 
             /**

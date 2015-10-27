@@ -10,6 +10,7 @@
         { block : 'user' },
         { block : 'notify' },
         { block : 'keyboard', elem : 'codes' },
-        { block : 'adding-input' }
+        { block : 'adding-input' },
+        { block : 'message' }
     ]
 });

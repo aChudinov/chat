@@ -167,7 +167,9 @@ modules.define(
                         });
 
                         if(messages.length){
-                            _this._markChannelRead(messages[messages.length - 1].ts);
+                            if(!infiniteScroll){
+                                _this._markChannelRead(messages[messages.length - 1].ts);
+                            }
 
                             _this._tsOffset = messages[0].ts;
                         }else{

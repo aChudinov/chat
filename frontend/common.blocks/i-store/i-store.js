@@ -141,7 +141,10 @@ function(provide, BEM, chatAPI, channels, _, Notify){
          * @returns {Object}
          */
         getIm : function(id){
-            var im = _.find(_ims, { id : id });
+            var predicate = (id.charAt(0) === 'U') ? 'user' : 'id';
+            var im = _.find(_ims, function(im){
+                return im[predicate] === id;
+            });
 
             return im || {};
         },

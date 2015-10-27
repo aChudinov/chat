@@ -2,8 +2,8 @@
  * @module message
  */
 modules.define('message',
-    ['i-bem__dom', 'BEMHTML', 'i-store', 'emojify', 'marked'],
-function(provide, BEMDOM, BEMHTML, Store, emojify, marked){
+    ['i-bem__dom', 'BEMHTML', 'jquery', 'i-store', 'emojify', 'marked'],
+function(provide, BEMDOM, BEMHTML, $, Store, emojify, marked){
     var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября' ,'ноября' ,'декабря'];
 
 /**
@@ -16,6 +16,7 @@ provide(BEMDOM.decl(this.name, {
             'inited' : function(){
                 this._modal = this.findBlockInside('modal');
                 this.bindTo('image', 'click', this._onImageClick);
+                this.bindTo('reference', 'click', this._onReferenceClick);
             }
         }
     },
@@ -27,6 +28,15 @@ provide(BEMDOM.decl(this.name, {
      */
     _onImageClick : function(){
         this._modal.setMod('visible', true);
+    },
+
+    _onReferenceClick : function(e){
+        e.preventDefault();
+
+        var item = $(e.currentTarget);
+        var id = this.elemParams(item).channelId;
+
+        this.emit('channel-referenced', { channelId : id });
     }
 }, {
 
@@ -189,10 +199,28 @@ provide(BEMDOM.decl(this.name, {
 
             if(sequence.charAt(0) === '#'){
                 id = sequence.substr(1);
-                message = message.replace('<' + pipedSequence + '>', '#' + Store.getChannel(id).name);
+                message = message.replace('<' + pipedSequence + '>', BEMHTML.apply({
+                    block : 'link',
+                    url : '#',
+                    mix : {
+                        block : 'message',
+                        elem : 'reference',
+                        js : { channelId : id }
+                    },
+                    content : '#' + Store.getChannel(id).name
+                }));
             }else if(sequence.charAt(0) === '@'){
                 id = sequence.substr(1);
-                message = message.replace('<' + pipedSequence + '>', '@' + Store.getUser(id).name);
+                message = message.replace('<' + pipedSequence + '>', BEMHTML.apply({
+                    block : 'link',
+                    url : '#',
+                    mix : {
+                        block : 'message',
+                        elem : 'reference',
+                        js : { channelId : Store.getIm(id).id }
+                    },
+                    content : '@' + Store.getUser(id).name
+                }));
             }else if(sequence.charAt(0) === '!'){
                 message = message.replace('<' + pipedSequence + '>', pipedSequence.slice(1));
             }else{
