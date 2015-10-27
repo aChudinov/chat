@@ -23,7 +23,6 @@ provide(BEMDOM.decl(this.name, {
     /**
      * Увеличение изображения при клике
      *
-     * @param {Event} e
      * @private
      */
     _onImageClick : function(){
@@ -34,7 +33,6 @@ provide(BEMDOM.decl(this.name, {
     /**
      * Возвращает элемент сообщения
      *
-     * @param {Object} user
      * @param {Object} message
      * @returns {Object}
      */
@@ -42,13 +40,14 @@ provide(BEMDOM.decl(this.name, {
         var user = Store.getUser(message.user) || {};
         var username = user ? (user.real_name || user.name) : 'Бот какой-то';
         var isFirstInGroup = (user.id !== this._lastMessageUserId) || !this._lastMessageUserId;
-        var isOlderThanDay = (message.ts - this._lastMessageTs > 1*24*60*60) || !this._lastMessageTs;
+        var messageDate = new Date(Math.round(message.ts) * 1000).getDate();
+        var hasDate = (this._lastMessageDate != messageDate) || !this._lastMessageDate;
 
         var messageBEMJSON = [{
             block : 'message',
             js : true,
             mix : [{ block : 'dialog', elem : 'message' }],
-            mods : { group : !isFirstInGroup && !isOlderThanDay },
+            mods : { group : !isFirstInGroup && !hasDate },
             content : [{
                 elem : 'content',
                 attrs : { 'data-time' : this._getFormattedTime(message.ts) },
@@ -56,7 +55,7 @@ provide(BEMDOM.decl(this.name, {
             }]
         }];
 
-        if(isFirstInGroup || isOlderThanDay){
+        if(isFirstInGroup || hasDate){
             messageBEMJSON[0].content.unshift(
                 {
                     block : 'avatar',
@@ -80,7 +79,7 @@ provide(BEMDOM.decl(this.name, {
             this._lastMessageUserId = user.id;
         }
 
-        if(isOlderThanDay){
+        if(hasDate){
             messageBEMJSON.unshift({
                 block : 'message',
                 elem : 'delimiter',
@@ -93,7 +92,7 @@ provide(BEMDOM.decl(this.name, {
             });
         }
 
-        this._lastMessageTs = message.ts;
+        this._lastMessageDate = messageDate;
 
         return BEMHTML.apply(messageBEMJSON);
     },
