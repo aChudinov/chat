@@ -37,7 +37,7 @@ modules.define(
                     .then(this._firstCommand)
                     .then(this._secondCommand.bind(this))
                     .then(this._emitAction.bind(this))
-                    .fail(function(){
+                    .catch(function(){
                         Notify.warning('Ошибка выполнения команды, попробуйте еще раз');
                     })
                     .always(function(){
