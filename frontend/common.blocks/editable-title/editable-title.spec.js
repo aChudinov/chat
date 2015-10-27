@@ -54,6 +54,16 @@ describe('editable-title', function(){
 
         editableTitle.hasMod(editableTitle.elem('input'), 'visible').should.be.false;
     });
+
+    it('should save', function(done){
+        editableTitle._saveTitle('test').then(function(){
+            editableTitle.hasMod(editableTitle.elem('spin'), 'visible').should.be.false;
+            editableTitle.hasMod(editableTitle.elem('input'), 'visible').should.be.false;
+            editableTitle.hasMod(editableTitle.elem('title'), 'visible').should.be.true;
+
+            done();
+        });
+    });
 });
 
 provide();

@@ -124,7 +124,7 @@ modules.define(
                 this.delMod(this._input, 'visible');
                 this.setMod(this._spin, 'visible');
 
-                chatAPI.post('channels.setTopic', {
+                return chatAPI.post('channels.setTopic', {
                     channel : this._channelId,
                     topic : value
                 })
