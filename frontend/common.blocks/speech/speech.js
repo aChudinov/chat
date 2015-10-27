@@ -108,33 +108,31 @@ modules.define(
              * @private
              */
             _requestSpeech : function(command, model){
-                var deferred = vow.defer();
-
                 command = command || 'Произнесите команду';
                 model = model || 'freeform';
 
                 this.setMod('loading');
 
-                speechkit.recognize({
-                    model : model,
-                    lang : 'ru-RU',
-                    apiKey : API_KEY,
+                return new vow.Promise(function(resolve, reject){
+                    speechkit.recognize({
+                        model : model,
+                        lang : 'ru-RU',
+                        apiKey : API_KEY,
 
-                    doneCallback : function(text){
-                        deferred.resolve(text);
-                    },
+                        doneCallback : function(text){
+                            resolve(text);
+                        },
 
-                    initCallback : function(){
-                        Notify.info(command);
-                    },
+                        initCallback : function(){
+                            Notify.info(command);
+                        },
 
-                    errorCallback : function(error){
-                        deffered.reject();
-                        Notify.error('Ошибка при распознавании команды: ', error);
-                    }
+                        errorCallback : function(error){
+                            reject();
+                            Notify.error(error, 'Ошибка при распознавании команды');
+                        }
+                    });
                 });
-
-                return deferred.promise();
             }
         }));
     }
