@@ -37,8 +37,8 @@ modules.define(
                     .then(this._firstCommand)
                     .then(this._secondCommand.bind(this))
                     .then(this._emitAction.bind(this))
-                    .catch(function(){
-                        Notify.warning('Ошибка выполнения команды, попробуйте еще раз');
+                    .catch(function(error){
+                        Notify.error(error, 'Ошибка голосового управления');
                     })
                     .always(function(){
                         this.delMod('loading');
@@ -70,10 +70,11 @@ modules.define(
                 });
 
                 if(!action){
-                    return vow.reject();
+                    throw new Error('Команда не найдена');
+                }else{
+                    return action;
                 }
 
-                return action;
             },
 
             /**
@@ -127,9 +128,8 @@ modules.define(
                             Notify.info(command);
                         },
 
-                        errorCallback : function(error){
-                            reject();
-                            Notify.error(error, 'Ошибка при распознавании команды');
+                        errorCallback : function(){
+                            throw new Error('Ошибка при распознавании команды');
                         }
                     });
                 });

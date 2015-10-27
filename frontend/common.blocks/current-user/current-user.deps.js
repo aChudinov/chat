@@ -2,6 +2,7 @@
     mustDeps : [],
     shouldDeps : [
         { block : 'current-user', elems : ['avatar', 'logout', 'title'] },
-        { block : 'speech' }
+        { block : 'speech' },
+        { block : 'difflib' }
     ]
 });
